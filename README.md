@@ -6,7 +6,8 @@ You can also source it, but that seems to require a CTRL+C, otherwise it hangs. 
 
 It creates a directory (.q) in /dev/shm, and all of the output of commands etc tend to go in there. It will also auto-delete this directory on exit. HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up.
 
-It also contains a relatively decent selection of useful functions: some are currently not super featureful, and there's likely to be a large number of bugs, but you can find the vast majority of them by running the command 'gethelp', but an overview:
+It also contains a relatively decent selection of useful functions: some are currently not super featureful, and there's likely to be a large number of bugs, but you can find the vast majority of them by running the command 'gethelp'.
+HOWEVER. An overview:
 
 - getenum takes the versions from the kernel, glibc, and dbus. For privilege escalation exploits, they're usually the ones you want. It also prints the init system, because it's good to know that.
 
