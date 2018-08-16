@@ -33,6 +33,8 @@ HOWEVER. An overview:
 
 - portscan should be fairly self-evident. It checks for the following open ports on one host: 21, 22, 23, 80, 443, 8080, 8443, 129, 445, 3389, 3306
 
+- prochide grabs the longest process name from ps (because we can't hide arguments, but we can choose something that makes them relatively invisible in the noise) and uses that as the $0 of whatever you execute
+
 - srm is just a wrapper around shred, basically
 
 - qsu uses an ASKPASS script to launch sudo without requiring a tty. Apply arguments as usual to sudo.
