@@ -227,7 +227,7 @@ sorry(){
 	else echo "No ipcalc. Checking if we've got a /24 and then pinging the first one..."
 		if hash ifconfig 2>/dev/null; then
 		if ifconfig | grep -q "255.255.255.0"; then 
-		INPUT=$(seq -f `ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 244"}'`)
+		INPUT=$(seq -f `ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'`)
 		echo $INPUT | tr ' ' '\n' | while read i;do
 			if ping -c1 -q $i | grep -q "\ 0%"; then
 			echo $i is alive >> /dev/shm/.q/ips
@@ -235,7 +235,7 @@ sorry(){
 		done
 		else 
 			if ip addr show | grep -E '/24*.brd'; then
-			INPUT=$(seq -f `ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 244"}'`)
+			INPUT=$(seq -f `ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'`)
 			echo $INPUT | tr ' ' '\n' | while read i;do
 				 if ping -c1 -q $i | grep -q "\ 0%"; then
 				 echo $i is alive >> /dev/shm/.q/ips
