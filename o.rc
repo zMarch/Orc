@@ -315,7 +315,7 @@ echo "[*] getidle - list all ptys and their idle times accurately."
 echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
 echo "[*] getuservices - list all running services with non-user accounts in passwd"
 echo "[*] portscan - run a portscan against common ports - portscan [host]"
-echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]
+echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]"
 echo "[*] srm - alias for secure shredding of files."
 echo "[*] qsu - sudo without a tty - qsu [password] [normal arguments]"
 echo "[*] qssh - ssh without a tty - qssh [password] [normal arguments]"
