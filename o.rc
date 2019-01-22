@@ -1,7 +1,8 @@
 #!/bin/sh
 # o.rc
-OVERSION="0.3"
+OVERSION="0.4"
 # NOTES
+# new features! see readme/gethelp
 # all the non-POSIX for loops have been removed
 # all the SIGs in trap changed
 # aliasing echo to /bin/echo to get around POSIX echo having no flags
