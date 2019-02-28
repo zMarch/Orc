@@ -122,7 +122,7 @@ ptys=`ls /dev/pts | grep '[[:digit:]]' | sort -g | tr '\n' ' '`
 echo $ptys | tr ' ' '\n' | while read i;do
 	echo -ne "PTY $i has been idle for "
 	idler=`stat -t /dev/pts/$i | awk -F " " '{ print $12 }'`
-	echo -ne "$((`date +%s` - $idler)) seconds.\n"
+	echo -ne "$((`date +%s` - $idler)) seconds and is owned by $(stat -c '%U' /dev/pts/$i).\n"
 done
 }
 
