@@ -136,7 +136,7 @@ if tty | grep -q "not"; then
 	echo "echo $1" >> /dev/shm/.q/.k
 	chmod a+x /dev/shm/.q/.k
 	shift
-	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -T $@
+	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T $@
 else
 	echo "You've got a tty. You can't use qssh."
 fi
