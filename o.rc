@@ -22,8 +22,16 @@ EOF
 )
 
 alias 'echo'='/bin/echo'
-trap "rm -rf /dev/shm/.q" EXIT TERM INT 
-backup=`cat $ENV`
+trap "rm -rf /dev/shm/.q" EXIT TERM INT
+
+# Creates a copy of this scipt in variable backup
+# Needs a start like "ENV=o.rc sh -i".
+backup=""
+if [ -r "$ENV" ]; then
+  backup=`cat $ENV`
+  # Convert to absolute file name for later use.
+  ENV=$(realpath "$ENV")
+fi
 NHOME=""
 
 getdbus() {
@@ -161,8 +169,12 @@ echo "$finalmem" | perl
 
 getpty() {
 SHELL=$(command -v sh)
-#echo "$backup" > $ENV
-ENV=$ENV script -c sh /dev/null
+#echo "$backup" > "$ENV"
+if [ -r "$ENV" ]; then
+  ENV="$ENV" script -c sh /dev/null
+else
+  echo "ENV not defined. Can not start script."
+fi
 }
 
 keyinstall() {
