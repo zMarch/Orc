@@ -2,7 +2,7 @@ Orc is a simple post-exploitation written in bash.
 I wrote this because I myself needed a more featureful post-exploitation toolkit for Linux. It's part of a larger bundle of scripts and tools, but I'll add those as I write and re-write them.
 
 It takes the form of an ENV script, so load orc into a shell by running ENV=o.rc sh -i (it does need an interactive shell, I'm afraid)
-You can also source it, but than function getpty does not work.
+You can also source it.
 
 It creates a directory (.q) in /dev/shm, and all of the output of commands etc tend to go in there. It will also auto-delete this directory on exit. HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up.
 

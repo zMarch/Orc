@@ -25,8 +25,12 @@ alias 'echo'='/bin/echo'
 trap "rm -rf /dev/shm/.q" EXIT TERM INT
 
 # Creates a copy of this scipt in variable backup
-# Needs a start like "ENV=o.rc sh -i".
+# Should be start like "ENV=o.rc sh -i".
 backup=""
+if [ \( ! -r "$ENV" \) -a -r "$BASH_SOURCE" ]; then
+  # Script was started in bash via source.
+  ENV=$BASH_SOURCE
+fi
 if [ -r "$ENV" ]; then
   backup=`cat $ENV`
   # Convert to absolute file name for later use.
