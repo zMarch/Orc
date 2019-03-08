@@ -27,7 +27,7 @@ trap "rm -rf /dev/shm/.q" EXIT TERM INT
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
 backup=""
-if [ \( ! -r "$ENV" \) -a -r "$BASH_SOURCE" ]; then
+if [ -r "$BASH_SOURCE" -a ! -r "$ENV" ]; then
   # Script was started in bash via source.
   ENV=$BASH_SOURCE
 fi
