@@ -107,14 +107,25 @@ timedshell() {
 echo "scheduling a reverse shell to launch later..."
 }
 
+listusers() {
+  # Listing users in passwd with login shells.
+  # Reject shells named *nologin or *false as valid shells.
+  getent passwd |
+  awk -F ':' '
+     NF==1 && $1 !~ /^#|nologin$|false$/ {shells[$1]=1}
+     $7 in shells {print $1}' /etc/shells -
+}
+
 getusers() {
-echo "Listing valid users with shells."
-getent passwd | grep -f /etc/shells | grep -v "nologin\|false" | cut -d: -f1
+  echo "Listing valid users with shells."
+  listusers
 }
 
 getuservices() {
-echo "Listing all service processes with accounts in passwd."
-ps --no-header -weFH | grep -v $(getent passwd | grep -f /etc/shells | grep -v nologin | grep -v false | awk -F":" '{print $1}' | tr '\n' '|' | sed s'/|/\\\|/g'  | sed s'/..$//')
+  echo "Listing all running services with non-user accounts in passwd."
+  { listusers; ps --no-header -weFH; } |
+  awk 'NF==1 {users[$1]=1}
+       NF>1 && !($1 in users) {print}'
 }
 
 getidle() {
