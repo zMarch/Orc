@@ -118,12 +118,15 @@ ps --no-header -weFH | grep -v $(getent passwd | grep -f /etc/shells | grep -v n
 }
 
 getidle() {
-ptys=`ls /dev/pts | grep '[[:digit:]]' | sort -g | tr '\n' ' '`
-echo $ptys | tr ' ' '\n' | while read i;do
-	echo -ne "PTY $i has been idle for "
-	idler=`stat -t /dev/pts/$i | awk -F " " '{ print $12 }'`
-	echo -ne "$((`date +%s` - $idler)) seconds and is owned by $(stat -c '%U' /dev/pts/$i) $(if [ $our_pty = $i ]; then echo "** this is us **"; fi).\n"
-done
+  # List all ptys and their idle times accurately.
+  # Arguments : none
+  # Globals   : our_pty could contain the number of our PTY
+  stat /dev/pts/* -c '%n %X %U' |
+  awk '$1 ~ /\/[[:digit:]]+$/ {
+      gsub( /[^[:digit:]]/, "", $1 )
+      list[$1]="PTY " $1 " is " systime()-$2 " seconds idle and owned by " $3
+      if( $1==ENVIRON["our_pty"] ) list[$1]=list[$1] " ** this is us **"}
+      END {for(i in list) print list[i]}'
 }
 
 srm() {
