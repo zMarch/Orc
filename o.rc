@@ -348,7 +348,11 @@ touch -r /dev/shm/.q/.l /var/log/wtmp
 }
 
 getrel() {
-cat /etc/*release | grep PRETTY | awk -F "=" '{print $2}' | tr --delete '"'
+  # Prints the OS name from the release file.
+  # arguments: none
+  # output   : print to stdout
+  # method   : Cuts the name from lines like PRETTY_NAME="name".
+  awk -F= 'toupper($1)~/PRETTY/ {gsub(/\"/,"",$2); print $2}' /etc/*release
 }
 
 hangup() {
