@@ -266,9 +266,13 @@ echo -ne "DNS says: "
 }
 
 prochide() {
-ARGS="$@"
-LONGARG==$(ps --no-header -weo cmd | awk '{ print length, $0 }' | sort -n -s | cut -d" " -f2-  | tail -n 1)
-bash -c "exec -a \"$LONGARG\" $ARGS"
+  # Execute a program hiden by a long program name.
+  # arguments: program to execute with optional arguments.
+  # methode  : use the longest command line of the current running
+  #            processes as name of the program to start.
+  ARGS="$@"
+  LONGARG=$(ps --no-header -wweo cmd | awk 'length(X)<length {X=$0}; END {print X}')
+  bash -c "exec -a \"$LONGARG\" $ARGS"
 }
 
 getnet() (
