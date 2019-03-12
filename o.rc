@@ -200,6 +200,10 @@ echo "Checking to see if we're in one giant simulation..."
 	echo "Virtual machine!"
 	TTT=1
 	fi
+	if dmesg | grep -qi "vboxvideo"; then
+        echo "Virtual machine! (Virtualbox)"
+        TTT=1
+        fi
 	if echo $TTT | grep -vq "1"; then
 	echo "Bare metal!"
 	fi
