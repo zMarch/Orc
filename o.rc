@@ -92,7 +92,7 @@ crontab -l > $OUTP/user_crontab.txt 2>/dev/null
 	fi
 	
 	netstat -peanut > $OUTP/netstat.txt
-	if [[ $EUID -eq 0 ]]; then
+	if [ "$EUID" = "0" ]; then
 		getent shadow > $OUTP/shadow.txt
 		find /home/ -name id_rsa > $OUTP/ssh_keys.txt
 		cat /etc/sudoers > $OUTP/sudoers.txt
