@@ -135,7 +135,17 @@ getinfo() {
       log2outp sellinux sestatus
     fi
   fi
-  tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
+  # Stores all log files in one compressed tar archive.
+  tar -cJf $HOME/f.tar.xz $OUTP
+  if [ $? -gt 0 ]; then
+    # maybe the tar internal xz fail. Try an external xz compression.
+    tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
+  fi
+  if [ $? -gt 0 ]; then
+    # maybe xz command failed. Try the old gzip inside tar
+    tar -czf $HOME/f.tar.gz $OUTP
+  fi
+  # Remove the single log files. Keep only the archive file.
   rm -rf $OUTP
 }
 
