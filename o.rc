@@ -66,6 +66,7 @@ log2outp() {
   # arguments: basename command command-arguments
   # outputs: pipes stdout into $OUTP/basename.txt
   #          pipes stderr into $OUTP/basename.err
+  #          logs basename and command call in $OUTP/log.txt
   if [ ! -d "$OUTP" ]; then
     echo 'output directory not defined or prepared'
     return 1
@@ -74,6 +75,7 @@ log2outp() {
     echo 'missing basename of the output files'
     return 1
   fi
+  echo "$@" >> "$OUTP/log.txt"
   local basename=$1
   shift
   if [ $# -lt 1 ]; then
