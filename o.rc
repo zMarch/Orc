@@ -434,6 +434,10 @@ alias 'netgrep'='netstat -peanuto | grep'
 alias 'getp'='getent passwd'
 
 alias 'ssh'='ssh -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+alias 'less'='LESSHISTFILE=/dev/null less'
+alias 'wget'='wget --no-hsts'
+alias 'vim'='vim -ni NONE'
+alias 'mysql'='MYSQL_HISTFILE=/dev/null mysql'
 
 
 unset HISTFILE
