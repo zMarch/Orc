@@ -98,16 +98,16 @@ crontab -l > $OUTP/user_crontab.txt 2>/dev/null
 		cat /etc/sudoers > $OUTP/sudoers.txt
 		cat /etc/crontab > $OUTP/crontab.txt
 		iptables -L > $OUTP/iptables.txt
-                cat /var/log/secure > ./secure.txt
-		cat /root/.bash_history > ./roothist.txt
-		cat /etc/ssh/sshd_config > ./sshd_config.txt
-		ls -al /root/ > ./root_dir.txt
+                cat /var/log/secure > $OUTP/secure.txt
+		cat /root/.bash_history > $OUTP/roothist.txt
+		cat /etc/ssh/sshd_config > $OUTP/sshd_config.txt
+		ls -al /root/ > $OUTP/root_dir.txt
 		#inelegant hack
 		netstat -peanut > $OUTP/netstat.txt
 		if hash getsebool 2>/dev/null; then
-			getenforce >> ./selinux.txt
-			getsebool -a >> ./selinux.txt
-			sestatus >> ./selinux.txt
+			getenforce >> $OUTP/selinux.txt
+			getsebool -a >> $OUTP/selinux.txt
+			sestatus >> $OUTP/selinux.txt
 		fi
 
 	fi
