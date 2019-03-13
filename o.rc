@@ -433,6 +433,7 @@ alias 'listener'='netstat -peanuto'
 alias 'netgrep'='netstat -peanuto | grep'
 alias 'getp'='getent passwd'
 
+alias 'psql'='PSQL_HISTORY=/dev/null psql'
 alias 'ssh'='ssh -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 alias 'less'='LESSHISTFILE=/dev/null less'
 alias 'wget'='wget --no-hsts'
