@@ -433,7 +433,7 @@ alias 'listener'='netstat -peanuto'
 alias 'netgrep'='netstat -peanuto | grep'
 alias 'getp'='getent passwd'
 
-alias 'ssh'='ssh -T'
+alias 'ssh'='ssh -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
 
 unset HISTFILE
