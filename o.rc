@@ -61,58 +61,78 @@ type aa-status >/dev/null 2>/dev/null
 	fi
 }
 
-getinfo() {
-echo "Gathering useful command output."
-echo "Find it in $HOME/f.tar.xz"
-mkdir $HOME/files
-OUTP=$HOME/files/
-getent passwd > $OUTP/passwd.txt
-uname -a > $OUTP/uname.txt
-ps -weFH > $OUTP/ps.txt
-w > $OUTP/w.txt
-last -i > $OUTP/last.txt
-uptime > $OUTP/uptime.txt
-id > $OUTP/id.txt
-date > $OUTP/date.txt
-cat /proc/cpuinfo > $OUTP/cpuinfo.txt
-free -g > $OUTP/free.txt
-route -n > $OUTP/route.txt
-cat /etc/hosts > $OUTP/hosts.txt
-cat /etc/resolv.conf > $OUTP/resolv.txt
-rpcinfo > $OUTP/rpcinfo.txt
-lsmod > $OUTP/lsmod.txt
-lsusb > $OUTP/lsusb.txt
-mount > $OUTP/mount.txt
-df > $OUTP/df.txt
-crontab -l > $OUTP/user_crontab.txt 2>/dev/null
-	if hash ifconfig 2>/dev/null; then
-		ifconfig -a > $OUTP/ifconfig.txt
-	else
-		ip link > $OUTP/ifconfig.txt
-	fi
-	
-	netstat -peanut > $OUTP/netstat.txt
-	if [ "$EUID" = "0" ]; then
-		getent shadow > $OUTP/shadow.txt
-		find /home/ -name id_rsa > $OUTP/ssh_keys.txt
-		cat /etc/sudoers > $OUTP/sudoers.txt
-		cat /etc/crontab > $OUTP/crontab.txt
-		iptables -L > $OUTP/iptables.txt
-                cat /var/log/secure > $OUTP/secure.txt
-		cat /root/.bash_history > $OUTP/roothist.txt
-		cat /etc/ssh/sshd_config > $OUTP/sshd_config.txt
-		ls -al /root/ > $OUTP/root_dir.txt
-		#inelegant hack
-		netstat -peanut > $OUTP/netstat.txt
-		if hash getsebool 2>/dev/null; then
-			getenforce >> $OUTP/selinux.txt
-			getsebool -a >> $OUTP/selinux.txt
-			sestatus >> $OUTP/selinux.txt
-		fi
+log2outp() {
+  # Runs a command and writes output to files in $OUTP.
+  # arguments: basename command command-arguments
+  # outputs: pipes stdout into $OUTP/basename.txt
+  #          pipes stderr into $OUTP/basename.err
+  if [ ! -d "$OUTP" ]; then
+    echo 'output directory not defined or prepared'
+    return 1
+  fi
+  if [ $# -lt 1 ]; then
+    echo 'missing basename of the output files'
+    return 1
+  fi
+  local basename=$1
+  shift
+  if [ $# -lt 1 ]; then
+    echo 'missing command to execute'
+    return 1
+  fi
+  "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
+}
 
-	fi
-tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
-rm -rf $OUTP
+getinfo() {
+  echo "Gathering useful command output."
+  echo "Find it in $HOME/f.tar.xz"
+  OUTP=$HOME/files/
+  mkdir --mode 700 $OUTP
+  log2outp passwd getent passwd
+  log2outp uname uname -a
+  log2outp ps ps -weFH
+  log2outp w w
+  log2outp last last -i
+  log2outp uptime uptime
+  log2outp id id
+  log2outp date date
+  log2outp cpuinfo cat /proc/cpuinfo
+  log2outp free free -g
+  log2outp route route -n
+  log2outp hosts cat /etc/hosts
+  log2outp resolve cat /etc/resolv.conf
+  log2outp rpcinfo rpcinfo
+  log2outp lsmod lsmod
+  log2outp lsusb lsusb
+  log2outp mount mount
+  log2outp df df
+  log2outp user_crontab crontab -l
+  if hash ifconfig 2>/dev/null; then
+    log2outp ifconfig ifconfig -a
+  else
+    log2outp ifconfig ip link
+  fi
+  log2outp netstat netstat -peanut
+  if [ "$EUID" = "0" ]; then
+    log2outp shadow getent shadow
+    log2outp ssh_keys find /home/ -name id_rsa
+    log2outp sudoers cat /etc/sudoers
+    log2outp crontab cat /etc/crontab
+    log2outp iptables iptables -L
+    log2outp secure cat /var/log/secure
+    log2outp roothist cat /root/.bash_history
+    log2outp sshd_config cat /etc/ssh/sshd_config
+    log2outp root_dir ls -al /root/
+    #inelegant hack
+    log2outp netstat netstat -peanut
+    if hash getsebool 2>/dev/null; then
+      log2outp sellinux getenforce
+      log2outp sellinux getsebool -a
+      log2outp sellinux sestatus
+    fi
+  fi
+  tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
+  rm -rf $OUTP
 }
 
 timedshell() { 
