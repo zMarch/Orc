@@ -115,7 +115,9 @@ getinfo() {
     log2outp ifconfig ip link
   fi
   log2outp netstat netstat -peanut
-  if [ "$EUID" = "0" ]; then
+  if [ "$EUID" = "0" -o -O "/root" ]; then
+    # Variable EUID is defined in the bash.
+    # Check EUID of /root works in dash (and in bash).
     log2outp shadow getent shadow
     log2outp ssh_keys find /home/ -name id_rsa
     log2outp sudoers cat /etc/sudoers
