@@ -168,11 +168,12 @@ getidle() {
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
   stat /dev/pts/* -c '%n %X %U' |
-  awk '$1 ~ /\/[[:digit:]]+$/ {
-      gsub( /[^[:digit:]]/, "", $1 )
-      list[$1]="PTY " $1 " is " systime()-$2 " seconds idle and owned by " $3
+  awk -v now=$(date +%s) '$1 ~ /\/[0-9]+$/ {
+      gsub( /[^0-9]/, "", $1 )
+      list[$1]="PTY " $1 " is " now-$2 " seconds idle and owned by " $3
       if( $1==ENVIRON["our_pty"] ) list[$1]=list[$1] " ** this is us **"}
       END {for(i in list) print list[i]}'
+  # reminder: do not use gawk functions, e.g. systime
 }
 
 srm() {
