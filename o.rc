@@ -167,6 +167,7 @@ getidle() {
   # List all ptys and their idle times accurately.
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
+  export our_pty=$(tty | cut -d '/' -f 4)
   stat /dev/pts/* -c '%n %X %U' |
   awk -v now=$(date +%s) '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
