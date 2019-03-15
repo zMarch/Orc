@@ -174,6 +174,17 @@ getuservices() {
        NF>1 && !($1 in users) {print}'
 }
 
+getspec() {
+echo -ne "RAM available: "
+free -hm | tr '\n' ' ' | awk '{ print $8 }'
+echo -ne "CPU model:"
+grep name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
+echo -ne "Number of cores: "
+grep -c processor /proc/cpuinfo
+echo -ne "Disk usage:"
+df -h
+}
+
 getidle() {
   # List all ptys and their idle times accurately.
   # Arguments : none
@@ -449,7 +460,8 @@ echo "[*] getusers - pull all users with a shell"
 echo "[*] getpty - pop a pty with script"
 echo "[*] getidle - list all ptys and their idle times accurately."
 echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
-echo "[*] getsuspect - pull my suspect tool from github and run it via an FD, no disk touching."
+echo "[*] getsuspect - pull my suspect tool from github."
+echo "[*] getspec - grab some hardware information."
 echo "[*] getuservices - list all running services with non-user accounts in passwd"
 echo "[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem."
 echo "[*] getdbus - list all dbus services."

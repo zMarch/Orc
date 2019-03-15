@@ -19,9 +19,13 @@ HOWEVER. An overview:
 
 - getjail does a check to see if we're in a chroot, and then does some very basic checks for hypervisors/virtualisation. If there are any better checks, let me know.
 
+- getsuspect pulls down my suspect script and runs it, looking for malware or signs of compromise
+
 - getsec checks for the presence of SELinux, AppArmor, and GrSec. I thought about adding stuff for rkhunter/chkrootkit, but in my experience they're not much of a threat unless you're using rootkits from 2003.
 
 - getuser gets all users with a shell
+
+- getspec prints some basic hardware information
 
 - getpty pops a pty using script. This pty should have Orc already loaded.
 
