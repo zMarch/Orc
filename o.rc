@@ -417,15 +417,29 @@ getrel() {
 }
 
 hangup() {
-echo "This is seriously rude..."
-echo "Terminating PTS/$1"
-OWNER=$(stat -c '%U' /dev/pts/$1)
-SSH_PID=$(pgrep -a sshd | grep pts/$1 | cut -d ' ' -f 1)
-echo "Owner of PTS is $OWNER"
-echo "SSH PID is $SSH_PID"
-echo "Segmentation Fault." > /dev/pts/$1
-sleep 2
-kill -9 $SSH_PID
+  # Terminate someones PTS by killing their SSH process.
+  # argument: number of PTS.
+  if [ $# -ne 1 ]; then
+    echo 'Error: hangup functions needs argument: number of PTS'
+    return 1
+  fi
+  echo "This is seriously rude..."
+  echo "Terminating PTS/$1"
+  local OWNER=$(stat -c '%U' /dev/pts/$1)
+  if [ "$OWNER" = "" ]; then
+    echo "Something is wrong: can't get the owner of pts/$1"
+    return 1
+  fi
+  echo "Owner of PTS is $OWNER"
+  local SSHD_PID=$(pgrep -a sshd | grep pts/$1 | cut -d ' ' -f 1)
+  if [ "$SSHD_PID" = "" ]; then
+    echo "Something is wrong: can't find SSHD PID of pts/$1"
+    return 1
+  fi
+  echo "SSHD PID is $SSHD_PID"
+  echo "Segmentation Fault." > /dev/pts/$1
+  sleep 2
+  kill -9 $SSHD_PID
 }
 
 getenum() {
