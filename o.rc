@@ -178,11 +178,22 @@ echo -ne "Disk usage:"
 df -h
 }
 
+ourpts() {
+  # Get our PTS.
+  # Writes nothing if not connected to a PTS.
+  local mytty=$(tty)
+  local mypts=${mytty#/dev/pts/}
+  # Check if it is a pts device
+  if [ "/dev/pts/$mypts" = "$mytty" ]; then
+    echo $mypts
+  fi
+}
+
 getidle() {
   # List all ptys and their idle times accurately.
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
-  export our_pty=$(tty | cut -d '/' -f 4)
+  export our_pty=$(ourpts)
   stat /dev/pts/* -c '%n %X %U' |
   awk -v now=$(date +%s) '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
@@ -420,14 +431,22 @@ hangup() {
   # Terminate someones PTS by killing their SSH process.
   # arguments: Number(s) of PTS. A single number or a list if numbers
   #            splitted in the arguments is possible.
-  #            Or "all" to terminate all PTS connected via SSh.
+  #            Or "all" to terminate all PTS connected via SSH.
+  #            Or "all other" to terminate all but not our SSH.
   if [ $# -lt 1 ]; then
     echo 'Error: hangup functions needs argument: ID number of PTS'
     return 1
   fi
+  local NOT_THIS=""
+  if [ "$2" = "other" ]; then
+    NOT_THIS=$(ourpts)
+  fi
   local PTS_LIST="$*"
-  if [ $# -eq 1 -a "$1" = "all" ]; then
-    PTS_LIST=$(ps -eo cmd | awk 'tolower($0) ~ /sshd.*pts\/[0-9]+/ {print substr($0,index(tolower($0),"pts/")+4) }')
+  if [ "$1" = "all" ]; then
+    PTS_LIST=$(ps -eo cmd | awk -v exclude="$NOT_THIS" '
+       tolower($0) ~ /sshd.*pts\/[0-9]+/ {
+       pts=substr($0,index(tolower($0),"pts/")+4);
+       if(pts != exclude) print pts }')
   fi
   echo 'This is seriously rude...'
   for PTS_ID in $PTS_LIST; do
