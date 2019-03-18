@@ -181,8 +181,8 @@ df -h
 ourpts() {
   # Get our PTS.
   # Writes nothing if not connected to a PTS.
-  local mytty=$(tty)
-  local mypts=${mytty#/dev/pts/}
+  mytty=$(tty)
+  mypts=${mytty#/dev/pts/}
   # Check if it is a pts device
   if [ "/dev/pts/$mypts" = "$mytty" ]; then
     echo $mypts
@@ -437,28 +437,30 @@ hangup() {
     echo 'Error: hangup functions needs argument: ID number of PTS'
     return 1
   fi
-  local NOT_THIS=""
   if [ "$2" = "other" ]; then
     NOT_THIS=$(ourpts)
+  else
+    NOT_THIS=""
   fi
-  local PTS_LIST="$*"
   if [ "$1" = "all" ]; then
-    PTS_LIST=$(ps -eo cmd | awk -v exclude="$NOT_THIS" '
+    PTS_LIST=$(ps -eo args | awk -v exclude="$NOT_THIS" '
        tolower($0) ~ /sshd.*pts\/[0-9]+/ {
        pts=substr($0,index(tolower($0),"pts/")+4);
        if(pts != exclude) print pts }')
+  else
+    PTS_LIST="$*"
   fi
   echo 'This is seriously rude...'
   for PTS_ID in $PTS_LIST; do
-    local PTS_NAME="pts/$PTS_ID"
+    PTS_NAME="pts/$PTS_ID"
     echo "Terminating $PTS_NAME"
-    local OWNER=$(stat -c '%U' /dev/$PTS_NAME)
+    OWNER=$(stat -c '%U' /dev/$PTS_NAME)
     if [ "$OWNER" = "" ]; then
       echo "Something is wrong: can't get the owner of $PTS_NAME"
       continue
     fi
     echo "Owner of $PTS_NAME is $OWNER"
-    local SSHD_PID=$(pgrep -a sshd | grep "$PTS_NAME" | cut -d ' ' -f 1)
+    SSHD_PID=$(pgrep -a sshd | grep "$PTS_NAME" | cut -d ' ' -f 1)
     if [ "$SSHD_PID" = "" ]; then
       echo "Something is wrong: can't find SSHD PID of $PTS_NAME"
       continue
