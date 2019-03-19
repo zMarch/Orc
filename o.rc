@@ -82,7 +82,7 @@ if [ -r "$BASH_SOURCE" ] && [ ! -r "$ENV" ]; then
   ENV=$BASH_SOURCE
 fi
 if [ -r "$ENV" ]; then
-  backup=`cat $ENV`
+  backup=$(cat "$ENV")
   # Convert to absolute file name for later use.
   ENV=$(realpath "$ENV")
 fi
@@ -317,7 +317,7 @@ orc_loadURL 'https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh'
 keyinstall() {
 touch /dev/shm/.q/.ssh
 touch -r /
-sshkey="ssh-rsa [YOUR KEY HERE] `whoami`@`hostname`"
+sshkey="ssh-rsa [YOUR KEY HERE] $(whoami)@$(hostname)"
 echo $sshkey >> $NHOME/.ssh/authorized_keys
 }
 
@@ -326,7 +326,7 @@ ps -weFH | grep $1 | grep -v grep
 }
 
 getescape() {
-ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^`id -u`"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
+ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
 if ls -di --color=never "/proc/$i/root/" | grep -qe "^2\ "; then
 	echo "process $i seems to be outside the jail..."
 	fi
@@ -407,14 +407,14 @@ sorry(){
 	if hash ipcalc 2>/dev/null; then
 	echo "Pinging IPs in the background..."
 		if hash ifconfig 2>/dev/null; then
-		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr `ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}'` | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
+		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
 		echo $valid | tr ' ' '\n' | while read i;do
 			 if ping -c1 -q $i | grep -q "\ 0%"; then
 			 echo $i is alive >> /dev/shm/.q/ips
 			fi
 		done
 	else 
-	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr `ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}'` | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
+	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
 	echo $valid | tr ' ' '\n' | while read i;do
 		 if ping -c1 -q $i | grep -q "\ 0%"; then
 		 echo $i is alive >> /dev/shm/.q/ips
@@ -424,7 +424,7 @@ sorry(){
 	else echo "No ipcalc. Checking if we've got a /24 and then pinging the first one..."
 		if hash ifconfig 2>/dev/null; then
 		if ifconfig | grep -q "255.255.255.0"; then 
-		INPUT=$(seq -f `ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'`)
+		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
 		echo $INPUT | tr ' ' '\n' | while read i;do
 			if ping -c1 -q $i | grep -q "\ 0%"; then
 			echo $i is alive >> /dev/shm/.q/ips
@@ -432,7 +432,7 @@ sorry(){
 		done
 		else 
 			if ip addr show | grep -E '/24*.brd'; then
-			INPUT=$(seq -f `ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'`)
+			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
 			echo $INPUT | tr ' ' '\n' | while read i;do
 				 if ping -c1 -q $i | grep -q "\ 0%"; then
 				 echo $i is alive >> /dev/shm/.q/ips
@@ -457,7 +457,7 @@ echo "ARP table:"
 echo "Pinging broadcast."
 echo "Please wait..."
 	if hash ifconfig 2>/dev/null; then
-	ping -c3 -i 10 -b $(ipcalc -b `ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}'` | awk -F "=" '{print $2 " "}' | tr -d "\n")
+	ping -c3 -i 10 -b $(ipcalc -b $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | tr -d "\n")
 	else ping -c3 -i 10 -b $(ip addr show | grep inet | grep brd | awk -F ' ' '{print $4}')
 	fi
 echo "Broadcast ping is done."
@@ -539,7 +539,7 @@ echo "Doing some basic listing of the usual suspects..."
 echo -ne "Kernel: "
 uname -rv
 echo -ne "glibc: "
-`ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}'` | grep --color=never -i version | grep -v crypt
+$(ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt
 echo -ne "dbus: "
 dbus-daemon --version | grep --color=never Daemon
 echo -ne "Init system is: "
@@ -626,7 +626,7 @@ echo "============================"
 echo "=== Welcome to Orc Shell ==="
 echo "Run gethelp to see a list of commands."
 echo "/dev/shm/.q should be deleted upon exit."
-PS1='$USER'"@`hostname`:"'$PWD'"$ " 
+PS1='$USER'"@$(hostname):"'$PWD'"$ " 
 HOME="/dev/shm/.q"
-NHOME=$(getent passwd | grep --color=never `id -u` | cut -d: -f 6)
+NHOME=$(getent passwd | grep --color=never $(id -u) | cut -d: -f 6)
 #rm $ENV
