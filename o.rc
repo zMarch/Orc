@@ -233,9 +233,9 @@ getspec() {
 echo -ne "RAM available: "
 free -hm | tr '\n' ' ' | awk '{ print $8 }'
 echo -ne "CPU model:"
-grep name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
+grep --color=never name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
 echo -ne "Number of cores: "
-grep -c processor /proc/cpuinfo
+grep --color=never -c processor /proc/cpuinfo
 echo -ne "Disk usage:"
 df -h
 }
@@ -539,11 +539,11 @@ echo "Doing some basic listing of the usual suspects..."
 echo -ne "Kernel: "
 uname -rv
 echo -ne "glibc: "
-`ldd $(command -v id) | grep libc.so | awk -F " " '{print $3}'` | grep -i version | grep -v crypt
+`ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}'` | grep --color=never -i version | grep -v crypt
 echo -ne "dbus: "
-dbus-daemon --version | grep Daemon
+dbus-daemon --version | grep --color=never Daemon
 echo -ne "Init system is: "
-ps -p 1 | grep -v CMD| awk -F " " '{ print $4 }'
+ps -p 1 | grep --color=never -v CMD| awk -F " " '{ print $4 }'
 
 }
 
@@ -628,5 +628,5 @@ echo "Run gethelp to see a list of commands."
 echo "/dev/shm/.q should be deleted upon exit."
 PS1='$USER'"@`hostname`:"'$PWD'"$ " 
 HOME="/dev/shm/.q"
-NHOME=$(getent passwd | grep `id -u` | cut -d: -f 6)
+NHOME=$(getent passwd | grep --color=never `id -u` | cut -d: -f 6)
 #rm $ENV
