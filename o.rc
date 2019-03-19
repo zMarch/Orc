@@ -131,7 +131,7 @@ log2outp() {
     return 1
   fi
   echo "$@" >> "$OUTP/log.txt"
-  local basename=$1
+  basename=$1
   shift
   if [ $# -lt 1 ]; then
     echo 'missing command to execute'
