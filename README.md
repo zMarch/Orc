@@ -13,6 +13,8 @@ HOWEVER. An overview:
 
 - getenum takes the versions from the kernel, glibc, and dbus. For privilege escalation exploits, they're usually the ones you want. It also prints the init system, because it's good to know that.
 
+- getexploit pulls down the linux exploit suggester
+
 - getinfo pulls basically everything useful and generic i could think of and sticks it in a tar.xz file for you.
 
 - getrel prints the OS name from the release file

