@@ -1,0 +1,5 @@
+language: shell
+script:
+  - bash -c 'shopt -s bash; shellcheck **/*.{rc,sh,ksh,bash}'
+  - bash -c 'shopt -s sh; shellcheck **/*.{rc,sh,ksh,bash}'
+  - bash -c 'shopt -s ksh; shellcheck **/*.{rc,sh,ksh,bash}'
