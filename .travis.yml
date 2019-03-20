@@ -1,0 +1,6 @@
+language: shell
+script:
+  # Optimize portability: ShellCheck for bash, POSIX sh and ksh interpreter.
+  - bash -c 'shopt -s globstar; shellcheck -s bash **/*.rc'
+  - bash -c 'shopt -s globstar; shellcheck -s sh **/*.rc'
+  - bash -c 'shopt -s globstar; shellcheck -s ksh **/*.rc'

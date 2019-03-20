@@ -1,14 +1,21 @@
-Orc is a simple post-exploitation written in bash.
+# Orc is a simple post-exploitation written in bash.
+
 Authors: Darren Martyn, March, Ulrich Berntien
+
+## The Project
 
 IRC Channel: #orc on irc.hackint.eu
 
 I initially wrote this because I myself needed a more featureful post-exploitation toolkit for Linux. It's part of a larger bundle of scripts and tools, but I'll add those as I write and re-write them.
 
+## Script Start
+
 It takes the form of an ENV script, so load orc into a shell by running ENV=o.rc sh -i (it does need an interactive shell, I'm afraid)
 You can also source it.
 
 It creates a directory (.q) in /dev/shm, and all of the output of commands etc tend to go in there. It will also auto-delete this directory on exit. HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up.
+
+## Functions
 
 It also contains a relatively decent selection of useful functions: some are currently not super featureful, and there's likely to be a large number of bugs, but you can find the vast majority of them by running the command 'gethelp'.
 HOWEVER. An overview:
@@ -66,3 +73,11 @@ HOWEVER. An overview:
 - getdbus lists all dbus services for delicious priv-esc
 
 - getescape attempts to find a way to escape a chroot by traversing a poorly configured /proc/
+
+## Compatibility Status
+
+Current the compatibility of Orc to bash, POXIS shell (e.g. dash) and other shells is a work item.
+
+The [ShellCheck](https://www.shellcheck.net/) in the [Travis CI](https://travis-ci.org/) gives hints to optimize the compatibility. Current the checks failed but despite that O.rc is runable on most POSIX conform shells.
+
+[![Build Status](https://travis-ci.org/UlrichBerntien/shellcheck.svg?branch=shellcheck-01)](https://travis-ci.org/UlrichBerntien/Orc)
