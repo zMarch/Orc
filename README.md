@@ -2,7 +2,9 @@
 
 Authors: Darren Martyn, March, Ulrich Berntien
 
-## Project History
+## The Project
+
+IRC Channel: #orc on irc.hackint.eu
 
 I initially wrote this because I myself needed a more featureful post-exploitation toolkit for Linux. It's part of a larger bundle of scripts and tools, but I'll add those as I write and re-write them.
 
