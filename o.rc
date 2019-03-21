@@ -88,11 +88,28 @@ if [ -r "$ENV" ]; then
 fi
 NHOME=""
 
-
 orc_createEchoFile () {
-echo '#!/bin/sh' > /dev/shm/.q/.c
-echo "echo '$1'" >> /dev/shm/.q/.c
-chmod a+x /dev/shm/.q/.c
+  # Creates a shell script file which echos the arguments.
+  # Argument: Text to echo.
+  # Global: set $ORC_ECHO_FILE to the created file.
+  if [ $# -lt 1 ]; then
+    echo 'Error, missing text to echo.'
+    return 1
+  fi
+  if [ "$HOME" = "" ]; then
+    echo 'Error, HOME variable is empty'
+    return 1
+  fi
+  # Create the script file in the prepared HOME directory
+  ORC_ECHO_FILE="$HOME/.c"
+  echo '#!/bin/sh' > "$ORC_ECHO_FILE"
+  if [ ! -r "$ORC_ECHO_FILE" ]; then
+    echo 'Error, can not create echo file'
+    return 1
+  fi
+  # The text must be single-quoted to prevent changes by the shell
+  echo "echo '$*'" >> "$ORC_ECHO_FILE"
+  chmod a+x "$ORC_ECHO_FILE"
 }
 
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -277,20 +294,36 @@ shred -vzfun 2 "$1"
 }
 
 qssh() {
-if tty | grep -q "not"; then
-	orc_createEchoFile "$1"
-	shift
-	DISPLAY="" SSH_ASKPASS="/dev/shm/.q/.c" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
-else
-	echo "You've got a tty. You can't use qssh."
-fi
+  # ssh without a tty - qssh [password] [normal arguments]
+  # Arguments: password
+  #            arguments feed through to the ssh
+  # Method: Creates a shell script file which echoes the password.
+  if [ $# -lt 2 ]; then
+    echo 'Error, qssh needs at least password and command as arguments'
+    return 1
+  fi
+  if tty | grep -q "not"; then
+    orc_createEchoFile "$1"
+    shift
+    DISPLAY="" SSH_ASKPASS="$ORC_ECHO_FILE" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
+  else
+    echo "You've got a tty. You can't use qssh."
+  fi
 }
 
 qsu() {
-orc_createEchoFile "$1"
-shift
-SUDO_ASKPASS=/dev/shm/.q/.c sudo -A "$@"
-rm /dev/shm/.q/.c
+  # sudo without a tty - qsu [password] [normal arguments]
+  # Arguments: password
+  #            arguments feed through to the sudo
+  # Method: Creates a shell script file which echoes the password.
+  if [ $# -lt 2 ]; then
+    echo 'Error, qsu needs at least password and command as arguments'
+    return 1
+  fi
+  orc_createEchoFile "$1"
+  shift
+  SUDO_ASKPASS="$ORC_ECHO_FILE" sudo -A "$@"
+  rm "$ORC_ECHO_FILE"
 }
 
 memexec() {
