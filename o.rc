@@ -107,9 +107,10 @@ orc_createEchoFile () {
     echo 'Error, can not create echo file'
     return 1
   fi
+  # Limit access to the owner
+  chmod a-rw,u=rwx "$ORC_ECHO_FILE"
   # The text must be single-quoted to prevent changes by the shell
   echo "echo '$*'" >> "$ORC_ECHO_FILE"
-  chmod a+x "$ORC_ECHO_FILE"
 }
 
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
