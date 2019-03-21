@@ -91,7 +91,7 @@ NHOME=""
 
 orc_createEchoFile () {
 echo '#!/bin/bash' > /dev/shm/.q/.c
-echo "echo $1" >> /dev/shm/.q/.c
+echo "echo '$1'" >> /dev/shm/.q/.c
 chmod a+x /dev/shm/.q/.c
 }
 
