@@ -270,14 +270,21 @@ trap 'rm -rf $HOME' EXIT TERM INT
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
 backup=""
-if [ -r "$BASH_SOURCE" ] && [ ! -r "$ENV" ]; then
-  # Script was started in bash via source.
-  ENV=$BASH_SOURCE
+if [ -n "$BASH" ]; then
+  # Script runs in bash. Here BASH_SOURCE exists.
+  # shellcheck disable=SC2169
+  if [ -r "${BASH_SOURCE[0]}" ] && [ ! -r "$ENV" ]; then
+    # Script was started in bash via source.
+    ENV=${BASH_SOURCE[0]}
+  fi
 fi
 if [ -r "$ENV" ]; then
   backup=$(cat "$ENV")
   # Convert to absolute file name for later use.
   ENV=$(realpath "$ENV")
+fi
+if [ -z "$backup" ]; then
+  echo 'Warning, backup variable with script file is not available'
 fi
 NHOME=""
 
