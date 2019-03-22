@@ -165,6 +165,10 @@ orc_makeHome() {
       break
     fi
   done
+  # no good home directory found. Use /dev/shm/.q as error fallback
+  echo 'Warning, found no good home directory, some functions may fail'
+  HOME="/dev/shm/.q"
+  mkdir $HOME 2>/dev/null
   }
 
 
