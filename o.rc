@@ -739,7 +739,6 @@ sorry(){
 fi
 }
 
-valida=""
 valid=""
 
 echo "Let's see what we can find on the network..."
