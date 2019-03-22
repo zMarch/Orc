@@ -624,7 +624,7 @@ done
 }
 
 getjail() {
-ttt=0
+TTT=0
 echo "Checking to see if we're in one giant simulation..."
 	if ls -di --color=never / | grep -vqe "^2.*/$"; then
 	TTT=1
