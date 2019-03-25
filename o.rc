@@ -53,6 +53,24 @@ sys.stdout.write(request.read())
   fi
 }
 
+orc_tryTcpConnection () {
+  # Try to open a TCP connection to given host and port.
+  # Argument: host name or host IP address
+  #           TCP port number
+  # Return: 0 if and ony if TCP connection could be opened
+  if [ $# -ne 2 ]; then
+    echo 'Error: need host and TCP port as arguments'
+    return 1
+  fi
+  if orc_existsProg bash; then
+    bash -c "echo '' > /dev/tcp/$1/$2" 2>/dev/null
+  else
+    echo 'Error: no tool to open TCP connection found'
+    return 1
+  fi
+}
+
+
 # ~~~ Helper Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the section of the internal helper functions are collected.
@@ -406,8 +424,7 @@ portscan() {
   echo "Starting portscan of $1 ..."
   for port in  21 22 23 80 443 8080 8443 129 445 3389 3306
   do
-    bash -c "echo '' > /dev/tcp/$1/$port" 2>/dev/null
-    if echo $? | grep -q 0; then
+    if orc_tryTcpConnection "$1" "$port"; then
       echo "Host $1 TCP port $port open"
     fi
   done
