@@ -404,11 +404,11 @@ portscan() {
     return 1
   fi
   echo "Starting portscan of $1 ..."
-  porta="21 22 23 80 443 8080 8443 129 445 3389 3306"
-  echo "$porta" | tr ' ' '\n' | while read i;do
-    bash -c "echo '' > /dev/tcp/$1/$i" 2>/dev/null
+  for port in  21 22 23 80 443 8080 8443 129 445 3389 3306
+  do
+    bash -c "echo '' > /dev/tcp/$1/$port" 2>/dev/null
     if echo $? | grep -q 0; then
-      echo "Host $1 port $i open"
+      echo "Host $1 TCP port $port open"
     fi
   done
 }
