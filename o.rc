@@ -396,14 +396,21 @@ echo "Checking to see if we're in one giant simulation..."
 }
 
 portscan() {
-porta="21 22 23 80 443 8080 8443 129 445 3389 3306"
-echo "Starting portscan..."
-echo "$porta" | tr ' ' '\n' | while read i;do
-bash -c "echo '' > /dev/tcp/$1/$i" 2>/dev/null
-	if echo $? | grep -q 0; then
-	echo "Host $1 port $i open"
-	fi
-done
+  # Run a portscan against common ports
+  # List ports which allow TCP connections.
+  # Argument: Name or IP of the target box.
+  if [ $# -ne 1 ]; then
+    echo 'Error, portscan needs one host name or host address'
+    return 1
+  fi
+  echo "Starting portscan of $1 ..."
+  porta="21 22 23 80 443 8080 8443 129 445 3389 3306"
+  echo "$porta" | tr ' ' '\n' | while read i;do
+    bash -c "echo '' > /dev/tcp/$1/$i" 2>/dev/null
+    if echo $? | grep -q 0; then
+      echo "Host $1 port $i open"
+    fi
+  done
 }
 
 fpssh() {
