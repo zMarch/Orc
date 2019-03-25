@@ -62,7 +62,10 @@ orc_tryTcpConnection () {
     echo 'Error: need host and TCP port as arguments'
     return 1
   fi
-  if orc_existsProg nc; then
+  if orc_existsProg nmap; then
+    # TCP connect scan with nmap
+    nmap -oG - -Pn -sT -p "$2" "$1" | grep -q "/open/tcp/"
+  elif orc_existsProg nc; then
     # Open connection with netcat
     # Do not use option -N here because not all nc implementations support
     # this (e.g. busybox).
