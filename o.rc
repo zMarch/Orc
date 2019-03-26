@@ -27,9 +27,34 @@ orc_loadURL () {
   # Loads from an URL via curl, wget or perl.
   # Argument: The URL to download, https is supported.
   # Output to stdout: The content of the URL document.
+  # Global: http(s)_proxy variables will be used.
   if [ $# -ne 1 ]; then
     echo 'Error: argument must be one URL to load'
     return 1
+  fi
+  # A proxy could be set via environment variables to the tools.
+  # But some tools in some versions needs lower case and some
+  # needs upper case variable names. To increase portability
+  # both cases will be exported.
+  export http_proxy
+  export HTTP_PROXY
+  if [ -n "$http_proxy" ]; then
+    if [ -n "$HTTP_PROXY" ] && [ "$HTTP_PROXY" != "$http_proxy" ]; then
+      echo 'Warning, ignore HTTP_PROXY value and use http_proxy value.'
+    fi
+    HTTP_PROXY=$http_proxy
+  elif [ -n "$HTTP_PROXY" ]; then
+    http_proxy=$HTTP_PROXY
+  fi
+  export https_proxy
+  export HTTPS_PROXY
+  if [ -n "$https_proxy" ]; then
+    if [ -n "$HTTPS_PROXY" ] && [ "$HTTPS_PROXY" != "$https_proxy" ]; then
+      echo 'Warning, ignore HTTPS_PROXY value and use https_proxy value.'
+    fi
+    HTTPS_PROXY=$https_proxy
+  elif [ -n "$HTTPS_PROXY" ]; then
+    https_proxy=$HTTPS_PROXY
   fi
   if orc_existsProg curl; then
     curl --silent --location --insecure -- "$1"
