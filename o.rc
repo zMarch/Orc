@@ -65,14 +65,14 @@ orc_loadURL () {
              $url = $ARGV[0];
              $ua->ssl_opts(verify_hostname => 0,SSL_verify_mode => 0x00);
              print get $url;
-             ' -- "$1"
+            ' -- "$1"
   elif orc_existsProg python; then
     # Do not insert the code because python is insert sensitive.
     PYTHONHTTPSVERIFY=0 python -c '
 import sys, urllib2
 request = urllib2.urlopen(sys.argv[1])
 sys.stdout.write(request.read())
-  ' "$1"
+    ' "$1"
   else
     echo 'Error: no download tool found'
     return 1
@@ -95,6 +95,14 @@ orc_tryTcpConnection () {
   elif orc_existsProg nmap; then
     # TCP connect scan with nmap
     nmap -oG - -Pn -sT -p "$2" "$1" | grep -q "/open/tcp/"
+  elif orc_existsProg perl; then
+    perl -e 'use IO::Socket;
+             $s = IO::Socket::INET->new(
+                  PeerAddr => $ARGV[0], PeerPort => $ARGV[1],
+                  Proto => "tcp", Type => SOCK_STREAM)
+                  or exit 1;
+             close $s;
+            ' -- "$1" "$2"
   elif orc_existsProg python; then
     # TCP connection open with python version 2
     # Do not insert the code because python is insert sensitive.
@@ -106,7 +114,7 @@ try:
 except:
   sys.exit(1)
 sys.exit(0)
-  ' "$1" "$2"
+    ' "$1" "$2"
   elif orc_existsProg nc; then
     # Open connection with netcat
     # Do not use option -N here because not all nc implementations support
