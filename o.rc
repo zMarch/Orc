@@ -132,10 +132,19 @@ sys.exit(0)
   fi
 }
 
+orc_writeabletmp() {
+#potentially integrate into makehome
+echo "Finding writeable tmpfs directory"
+df -Plt tmpfs | cut -d "%" -f 2 | grep -v Capac | tr -d ' ' | tr ' ' '\n' | while read i
+	do
+		 [ -w $i ] && echo "$i writeable" || echo "$i permission denied"
+	done 
+}
+
 orc_makeHome() {
   # Creates a home directory.
   # Sets the variable $HOME to this new created directory.
-  # Searchs a temporary directory without noexec flag as base.
+  # Searchs a temporary directory without noexec flag as base. 
   for base in "/dev/shm" "$XDG_RUNTIME_DIR" "/tmp" "/var/tmp" "$TMPDIR" "$HOME" "$(pwd)"
   do
     if [ ! -d "$base" ]; then
@@ -868,7 +877,7 @@ alias 'less'='LESSHISTFILE=/dev/null less'
 alias 'wget'='wget --no-hsts'
 alias 'vim'='vim -ni NONE'
 alias 'mysql'='MYSQL_HISTFILE=/dev/null mysql'
-
+alias 'gettmp'='orc_writeabletmp'
 
 unset HISTFILE
 HISTSIZE=0
