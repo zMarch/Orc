@@ -139,7 +139,7 @@ orc_listtmp() {
   # file destinations.
   # Use simple df call to keep script compatible to the most systems.
   # -l, -t, --output is not available on some systems, e.g. busybox.
-  { df -Pi;
+  { df -P;
     echo '/dev/shm';
     echo "$XDG_RUNTIME_DIR";
     echo '/tmp';
