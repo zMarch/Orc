@@ -132,27 +132,41 @@ sys.exit(0)
   fi
 }
 
-orc_writeabletmp() {
-#potentially integrate into makehome
-echo "Finding writeable tmpfs directory"
-df -Plt tmpfs | cut -d "%" -f 2 | grep -v Capac | tr -d ' ' | tr ' ' '\n' | while read i
-	do
-		 [ -w $i ] && echo "$i writeable" || echo "$i permission denied"
-	done 
+
+orc_listtmp() {
+  # List tmpfs directories with access information.
+  # Search in the list of tmpfs filesystems and in a list of common
+  # file destinations.
+  # Use simple df call to keep script compatible to the most systems.
+  # -l, -t, --output is not available on some systems, e.g. busybox.
+  { df -P;
+    echo '/dev/shm';
+    echo "$XDG_RUNTIME_DIR";
+    echo '/tmp';
+    echo '/var/tmp';
+    echo "$TMPDIR";
+    echo "$HOME";
+    echo "$NHOME";
+    echo "/root";
+  } |
+  # filter: filesystem tmpfs and each directory only once
+  awk '(NF==1 || $1=="tmpfs") && hit[$NF]==0 {hit[$NF]=1; print $NF}' |
+  # filter: only existing directories
+  while read -r i; do
+    if [ -d "$i" ]; then
+      echo "$i"
+    fi
+  done
 }
+
 
 orc_makeHome() {
   # Creates a home directory.
   # Sets the variable $HOME to this new created directory.
   # Searchs a temporary directory without noexec flag as base. 
-  for base in "/dev/shm" "$XDG_RUNTIME_DIR" "/tmp" "/var/tmp" "$TMPDIR" "$HOME" "$(pwd)"
-  do
-    if [ ! -d "$base" ]; then
-      # not exist or no directory
-      continue
-    fi
-    if [ ! -w "$base" ] || [ ! -x "$base" ]; then
-      # no write or no execute access
+  for base in $(orc_listtmp); do
+    if [ ! -r "$base" ] || [ ! -w "$base" ] || [ ! -x "$base" ]; then
+      # no read, no write or no searchable access
       continue
     fi
     # Try to create a home directory
@@ -171,7 +185,7 @@ orc_makeHome() {
       rm "$base/.q/.t"
       # this is a good home
       HOME="$base/.q"
-      break
+      return
     fi
   done
   # no good home directory found. Use /dev/shm/.q as error fallback
@@ -823,8 +837,34 @@ echo -ne "dbus: "
 dbus-daemon --version | grep --color=never Daemon
 echo -ne "Init system is: "
 ps -p 1 | grep --color=never -v CMD| awk -F " " '{ print $4 }'
-
 }
+
+
+gettmp () {
+  echo 'Typical directories for tmp files:'
+  for i in $(orc_listtmp); do
+    printf "%s" "$i"
+    TTT=0
+    if [ -x "$i" ]; then
+      printf ' searchable'
+      TTT=1
+    fi
+    if [ -r "$i" ]; then
+      printf ' readable'
+      TTT=1
+    fi
+    if [ -w "$i" ]; then
+      printf ' writeable'
+      TTT=1
+    fi
+    if [ $TTT -eq 0 ]; then
+      echo ' permission denied'
+    else
+      echo ''
+    fi
+  done
+}
+
 
 gethelp() {
 echo "A probably non-comprehensive list of functionality in Orc v$OVERSION."
@@ -834,6 +874,7 @@ echo "[*] getrel - attempt to get the OS release file."
 echo "[*] getip - get external IP from akamai and google (HTTP and DNS)"
 echo "[*] getjail - check if we're in a chroot/VM"
 echo "[*] getsec - check if the big three security MAC programs are around"
+echo "[*] gettmp - list typical directories for tmp files"
 echo "[*] getusers - pull all users with a shell"
 echo "[*] getpty - pop a pty with script"
 echo "[*] getidle - list all ptys and their idle times accurately."
@@ -877,7 +918,6 @@ alias 'less'='LESSHISTFILE=/dev/null less'
 alias 'wget'='wget --no-hsts'
 alias 'vim'='vim -ni NONE'
 alias 'mysql'='MYSQL_HISTFILE=/dev/null mysql'
-alias 'gettmp'='orc_writeabletmp'
 
 unset HISTFILE
 HISTSIZE=0
