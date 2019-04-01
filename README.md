@@ -13,7 +13,12 @@ I initially wrote this because I myself needed a more featureful post-exploitati
 It takes the form of an ENV script, so load orc into a shell by running ENV=o.rc sh -i (it does need an interactive shell, I'm afraid)
 You can also source it.
 
-It creates a directory (.q) in /dev/shm, and all of the output of commands etc tend to go in there. It will also auto-delete this directory on exit. HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up.
+It creates a directory (.q) typical in /dev/shm, and all output of commands etc tend to go in there.
+It will also auto-delete this directory on exit.
+If /dev/shm does not exist or is mounted with noexec option, then the script can choose another directory.
+The used directory is stored in the HOME variable. The user account home directory is stored in the NHOME variable.
+
+HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up.
 
 ## Functions
 
@@ -39,6 +44,8 @@ HOWEVER. An overview:
 - getusers gets all users with a shell. ([Wiki](https://github.com/zMarch/Orc/wiki/getusers))
 
 - getspec prints some basic hardware information. ([Wiki](https://github.com/zMarch/Orc/wiki/getspec))
+
+- gettmp lists typical directories for tmp files. ([Wiki](https://github.com/zMarch/Orc/wiki/gettmp))
 
 - getpty pops a pty using script. This pty should have Orc already loaded. ([Wiki](https://github.com/zMarch/Orc/wiki/getpty))
 
