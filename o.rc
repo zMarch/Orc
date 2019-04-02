@@ -932,7 +932,7 @@ alias 'mysql'='MYSQL_HISTFILE=/dev/null mysql'
 unset HISTFILE
 HISTSIZE=0
 umask 002
-limit coredumpsize 0
+ulimit -c 0
 
 echo "=========== Info ==========="
 echo "Short kernel info: "
