@@ -841,7 +841,8 @@ echo "Doing some basic listing of the usual suspects..."
 printf "Kernel: "
 uname -rv
 printf "glibc: "
-$(ldd $(command -v id) | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt
+readonly libcv="$(ldd "$(command -v id)" | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt)"
+$libcv
 printf "dbus: "
 dbus-daemon --version | grep --color=never Daemon
 printf "Init system is: "
