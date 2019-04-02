@@ -18,7 +18,7 @@ It will also auto-delete this directory on exit.
 If /dev/shm does not exist or is mounted with noexec option, then the script can choose another directory.
 The used directory is stored in the HOME variable. The user account home directory is stored in the NHOME variable.
 
-HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up.
+HISTFILE is unset, and we use ulimit -c 0 to try and prevent any corefiles showing up. If ulimit isn't present, we'll try and use the limit coredumpsize command.
 
 ## Functions
 
@@ -51,7 +51,7 @@ HOWEVER. An overview:
 
 - getidle gives you an accurate idle time for ptys, letting you see how recently other users have been active. ([Wiki](https://github.com/zMarch/Orc/wiki/getidle))
 
-- getnet is a monstrous attempt to auto-enumerate living hosts on the network. It's probably broken, probably lacks anything good or right, and does use ping, so yeah. ([Wiki](https://github.com/zMarch/Orc/wiki/getnet))
+- getnet does some basic network enumeration with arp and known_hosts. ([Wiki](https://github.com/zMarch/Orc/wiki/getnet))
 
 - getuservices gets all processes running by users who don't have a shell. Useful. ([Wiki](https://github.com/zMarch/Orc/wiki/getuservices))
 
