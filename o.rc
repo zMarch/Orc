@@ -879,7 +879,9 @@ HISTSIZE=0
 umask 002
 if hash ulimit 2>/dev/null; then
         echo "coredumps disabled by ulimit"
-        ulimit -c 0
+	#disabling shellcheck here, we're doing our best
+        # shellcheck disable=SC2039
+	ulimit -c 0
 elif  hash limit 2>/dev/null; then
         echo "coredumps disabled by limit"
         limit coredumpsize 0
