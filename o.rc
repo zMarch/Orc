@@ -378,7 +378,7 @@ selinuxenabled >/dev/null 2>/dev/null
 	if echo $? | grep -q 0;
 	then echo "SELinux is enabled."
 	fi
-type aa-status >/dev/null 2>/dev/null
+command -V aa-status >/dev/null 2>/dev/null
 	if echo $? | grep -q 0;
 	then echo "AppArmor is probably installed."
 	fi
