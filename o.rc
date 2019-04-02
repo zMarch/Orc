@@ -697,50 +697,6 @@ prochide() {
 }
 
 getnet() (
-#i'm sorry
-
-sorry(){
-#this needs work
-	if hash ipcalc 2>/dev/null; then
-	echo "Pinging IPs in the background..."
-		if hash ifconfig 2>/dev/null; then
-		valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-		echo "$valid" | tr ' ' '\n' | while read -r i;do
-			 if ping -c1 -q "$i" | grep -q "\ 0%"; then
-			 echo "$i is alive" >> "$HOME/ips"
-			fi
-		done
-	else 
-	valid=$(seq -f $(ipcalc -n --minaddr --maxaddr $(ip addr show | grep inet | grep -i "broadcast\|brd" | awk -F ' ' '{print $2}') | awk -F "=" '{print $2 " "}' | sed s/0/%g/ |tr -d '\n' | awk -F'.' '{print $1"."$2"."$3"."$4" "$7" "$10}' | awk -F " " '{print $1" "$3" "$5}' | tr -d '\n'))
-	echo "$valid" | tr ' ' '\n' | while read -r i;do
-		 if ping -c1 -q "$i" | grep -q "\ 0%"; then
-		 echo "$i is alive" >> "$HOME/ips"
-		fi
-	done
-	fi
-	else echo "No ipcalc. Checking if we've got a /24 and then pinging the first one..."
-		if hash ifconfig 2>/dev/null; then
-		if ifconfig | grep -q "255.255.255.0"; then 
-		INPUT=$(seq -f $(ifconfig | grep inet | grep -i broadcast | grep -v inet6 | grep "255.255.255.0" | head -n1 | awk -F " " '{print $2}' | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-		echo "$INPUT" | tr ' ' '\n' | while read -r i;do
-			if ping -c1 -q "$i" | grep -q "\ 0%"; then
-			echo "$i" is alive >> "$HOME/ips"
-			fi
-		done
-		else 
-			if ip addr show | grep -E '/24*.brd'; then
-			INPUT=$(seq -f $(ip addr show | grep brd |grep "/24" | head -n 1| awk -F " " {'print $2'} | awk -F '.' '{print $1"."$2"."$3".%g 1 254"}'))
-			echo "$INPUT" | tr ' ' '\n' | while read -r i;do
-				 if ping -c1 -q "$i" | grep -q "\ 0%"; then
-				 echo "$i is alive" >> "$HOME/ips"
-				fi
-			done
-			fi
-		fi
-	fi
-fi
-}
-
 valid=""
 
 echo "Let's see what we can find on the network..."
@@ -750,17 +706,8 @@ echo "ARP table:"
 	else
 	ip neigh show | awk -F " " '{print $1}'
 	fi
-echo "Pinging broadcast."
-echo "Please wait..."
-	if hash ifconfig 2>/dev/null; then
-	ping -c3 -i 10 -b $(ipcalc -b $(ifconfig | grep inet | grep -i broadcast | awk -F ' ' '{print $2" "$4}') | awk -F "=" '{print $2 " "}' | tr -d "\n")
-	else ping -c3 -i 10 -b $(ip addr show | grep inet | grep brd | awk -F ' ' '{print $4}')
-	fi
-echo "Broadcast ping is done."
 echo "Pulling known hosts for your user and writing to $HOME/kh..."
 awk -F ' ' '{print $1}' "$NHOME/.ssh/known_hosts" > "$HOME/kh"
-sorry &
-
 
 )
 
