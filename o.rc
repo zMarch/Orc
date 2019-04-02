@@ -932,7 +932,15 @@ alias 'mysql'='MYSQL_HISTFILE=/dev/null mysql'
 unset HISTFILE
 HISTSIZE=0
 umask 002
-ulimit -c 0
+if hash ulimit 2>/dev/null; then
+        echo "coredumps disabled by ulimit"
+        ulimit -c 0
+elif  hash limit 2>/dev/null; then
+        echo "coredumps disabled by limit"
+        limit coredumpsize 0
+else echo "no limit/ulimit - coredumps left enabled, careful"
+fi
+
 
 echo "=========== Info ==========="
 echo "Short kernel info: "
