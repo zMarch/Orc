@@ -697,8 +697,6 @@ prochide() {
 }
 
 getnet() (
-valid=""
-
 echo "Let's see what we can find on the network..."
 echo "ARP table:"
 	if hash arp 2>/dev/null; then
