@@ -83,8 +83,7 @@ HOWEVER. An overview:
 
 ## Compatibility Status
 
-Current the compatibility of Orc to bash, POXIS shell (e.g. dash) and other shells is a work item.
-
-The [ShellCheck](https://www.shellcheck.net/) in the [Travis CI](https://travis-ci.org/) gives hints to optimize the compatibility. Current the checks failed but despite that O.rc is runable on most POSIX conform shells.
+[ShellCheck](https://www.shellcheck.net/) is used to ensure wide compatibility of the Orc script.
+The Bourne shell dialects: bash, sh and ksh are checked. For details see the Travis CI job log.
 
 [![Build Status](https://api.travis-ci.org/zMarch/Orc.svg?branch=master)](https://travis-ci.org/zMarch/Orc)
