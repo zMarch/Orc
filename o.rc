@@ -397,6 +397,18 @@ orc_home_of_currentuser () {
 }
 
 
+orc_ourpts() {
+  # Get our PTS.
+  # Writes nothing if not connected to a PTS.
+  mytty=$(tty)
+  mypts=${mytty#/dev/pts/}
+  # Check if it is a pts device
+  if [ "/dev/pts/$mypts" = "$mytty" ]; then
+    echo "$mypts"
+  fi
+}
+
+
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The user functions are designed to be called by the o.rc users.
@@ -520,23 +532,13 @@ printf "Disk usage:"
 df -h
 }
 
-ourpts() {
-  # Get our PTS.
-  # Writes nothing if not connected to a PTS.
-  mytty=$(tty)
-  mypts=${mytty#/dev/pts/}
-  # Check if it is a pts device
-  if [ "/dev/pts/$mypts" = "$mytty" ]; then
-    echo "$mypts"
-  fi
-}
 
 getidle() {
   # List all ptys and their idle times accurately.
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
   export our_pty
-  our_pty=$(ourpts)
+  our_pty=$(orc_ourpts)
   stat "/dev/pts/*" -c '%n %X %U' |
   awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
@@ -743,7 +745,7 @@ hangup() {
     return 1
   fi
   if [ "$2" = "other" ]; then
-    NOT_THIS=$(ourpts)
+    NOT_THIS=$(orc_ourpts)
   else
     NOT_THIS=""
   fi
