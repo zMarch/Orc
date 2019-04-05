@@ -393,7 +393,7 @@ orc_home_of_currentuser () {
   # Gets the home directory of the current user.
   # Argument: -
   # Output to stdout: home directory
-  orc_home_of_userid $(id -u)
+  orc_home_of_userid "$(id -u)"
 }
 
 
@@ -460,7 +460,7 @@ getinfo() {
   # The condition should work with POSIX sh and bash.
   # Variable EUID is defined in the bash.
   # Check EUID of /root works in dash (and in bash).
-  # shellcheck disable=SC2039
+  # shellcheck disable=SC2039,SC2169
   if [ "$EUID" = "0" ] || [ -O "/root" ]; then
     orc_log2outp shadow getent shadow
     orc_log2outp ssh_keys find /home/ -name id_rsa
