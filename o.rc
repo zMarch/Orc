@@ -257,7 +257,9 @@ cHJpbnQgImRvbmVcbiI7CmV4ZWN7Ii9wcm9jLyQkL2ZkLyRmZCJ9ICJ0ZXN0IiwgIiIsICIiIG9yIGRp
 EOF
 )
 
+
 alias 'echo'='/bin/echo'
+
 
 # Create home directory and prepare remove at script exit
 orc_makeHome
@@ -266,6 +268,7 @@ if [ ! -d "$HOME" ]; then
   exit 1
 fi
 trap 'rm -rf $HOME' EXIT TERM INT
+
 
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
@@ -287,6 +290,7 @@ if [ -z "$backup" ]; then
   echo 'Warning, backup variable with script file is not available'
 fi
 NHOME=""
+
 
 orc_createEchoFile () {
   # Creates a shell script file which echos the arguments.
@@ -313,6 +317,7 @@ orc_createEchoFile () {
   echo "echo '$*'" >> "$ORC_ECHO_FILE"
 }
 
+
 orc_httpsProxyReminder() {
   # Remind the user if https_proxy is not set and
   # tcp connection error to the server at port 443.
@@ -334,6 +339,7 @@ orc_httpsProxyReminder() {
   # else: if https_proxy is defined, then never remind
   return 0
 }
+
 
 orc_log2outp() {
   # Runs a command and writes output to files in $OUTP.
@@ -358,6 +364,28 @@ orc_log2outp() {
   fi
   "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
 }
+
+
+orc_home_of_userid () {
+  # Gets the home directory of the user.
+  # Argument: ID of the user.
+  # Output to stdout: home directory
+  if [ $# -ne 1 ]; then
+    echo 'argument user-id must be given'
+    return 1
+  fi
+  getent passwd |
+  awk -F ':' -v userid="$1" '$3 == userid {print $6}'
+}
+
+
+orc_home_of_currentuser () {
+  # Gets the home directory of the current user.
+  # Argument: -
+  # Output to stdout: home directory
+  orc_home_of_userid $(id -u)
+}
+
 
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -911,5 +939,5 @@ echo "=== Welcome to Orc Shell ==="
 echo "Run gethelp to see a list of commands."
 echo "$HOME should be deleted upon exit."
 PS1='$USER'"@$(hostname):"'$PWD'"$ " 
-NHOME=$(getent passwd | grep --color=never "$(id -u)" | cut -d: -f 6)
+NHOME=$(orc_home_of_currentuser)
 #rm $ENV
