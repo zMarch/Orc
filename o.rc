@@ -539,7 +539,8 @@ getidle() {
   # Globals   : our_pty could contain the number of our PTY
   export our_pty
   our_pty=$(orc_ourpts)
-  stat "/dev/pts/*" -c '%n %X %U' |
+  # using stat and the shell glob, so no quotes
+  stat /dev/pts/* -c '%n %X %U' |
   awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
       list[$1]="PTY " $1 " is " now-$2 " seconds idle and owned by " $3
