@@ -366,6 +366,16 @@ orc_log2outp() {
 }
 
 
+orc_listusers() {
+  # Listing users in passwd with login shells.
+  # Reject shells named *nologin or *false as valid shells.
+  getent passwd |
+  awk -F ':' '
+     NF==1 && $1 !~ /^#|nologin$|false$/ {shells[$1]=1}
+     $7 in shells {print $1}' /etc/shells -
+}
+
+
 orc_home_of_userid () {
   # Gets the home directory of the user.
   # Argument: ID of the user.
@@ -484,26 +494,20 @@ timedshell() {
 echo "scheduling a reverse shell to launch later..."
 }
 
-listusers() {
-  # Listing users in passwd with login shells.
-  # Reject shells named *nologin or *false as valid shells.
-  getent passwd |
-  awk -F ':' '
-     NF==1 && $1 !~ /^#|nologin$|false$/ {shells[$1]=1}
-     $7 in shells {print $1}' /etc/shells -
-}
 
 getusers() {
   echo "Listing valid users with shells."
-  listusers
+  orc_listusers
 }
+
 
 getuservices() {
   echo "Listing all running services with non-user accounts in passwd."
-  { listusers; ps --no-header -weFH; } |
+  { orc_listusers; ps --no-header -weFH; } |
   awk 'NF==1 {users[$1]=1}
        NF>1 && !($1 in users) {print}'
 }
+
 
 getspec() {
 printf "RAM available: "
