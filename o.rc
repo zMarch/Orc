@@ -257,7 +257,9 @@ cHJpbnQgImRvbmVcbiI7CmV4ZWN7Ii9wcm9jLyQkL2ZkLyRmZCJ9ICJ0ZXN0IiwgIiIsICIiIG9yIGRp
 EOF
 )
 
+
 alias 'echo'='/bin/echo'
+
 
 # Create home directory and prepare remove at script exit
 orc_makeHome
@@ -266,6 +268,7 @@ if [ ! -d "$HOME" ]; then
   exit 1
 fi
 trap 'rm -rf $HOME' EXIT TERM INT
+
 
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
@@ -287,6 +290,7 @@ if [ -z "$backup" ]; then
   echo 'Warning, backup variable with script file is not available'
 fi
 NHOME=""
+
 
 orc_createEchoFile () {
   # Creates a shell script file which echos the arguments.
@@ -313,6 +317,7 @@ orc_createEchoFile () {
   echo "echo '$*'" >> "$ORC_ECHO_FILE"
 }
 
+
 orc_httpsProxyReminder() {
   # Remind the user if https_proxy is not set and
   # tcp connection error to the server at port 443.
@@ -334,6 +339,7 @@ orc_httpsProxyReminder() {
   # else: if https_proxy is defined, then never remind
   return 0
 }
+
 
 orc_log2outp() {
   # Runs a command and writes output to files in $OUTP.
@@ -359,6 +365,50 @@ orc_log2outp() {
   "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
 }
 
+
+orc_listusers() {
+  # Listing users in passwd with login shells.
+  # Reject shells named *nologin or *false as valid shells.
+  getent passwd |
+  awk -F ':' '
+     NF==1 && $1 !~ /^#|nologin$|false$/ {shells[$1]=1}
+     $7 in shells {print $1}' /etc/shells -
+}
+
+
+orc_home_of_userid () {
+  # Gets the home directory of the user.
+  # Argument: ID of the user.
+  # Output to stdout: home directory
+  if [ $# -ne 1 ]; then
+    echo 'argument user-id must be given'
+    return 1
+  fi
+  getent passwd |
+  awk -F ':' -v userid="$1" '$3 == userid {print $6}'
+}
+
+
+orc_home_of_currentuser () {
+  # Gets the home directory of the current user.
+  # Argument: -
+  # Output to stdout: home directory
+  orc_home_of_userid "$(id -u)"
+}
+
+
+orc_ourpts() {
+  # Get our PTS.
+  # Writes nothing if not connected to a PTS.
+  mytty=$(tty)
+  mypts=${mytty#/dev/pts/}
+  # Check if it is a pts device
+  if [ "/dev/pts/$mypts" = "$mytty" ]; then
+    echo "$mypts"
+  fi
+}
+
+
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The user functions are designed to be called by the o.rc users.
@@ -371,6 +421,7 @@ echo "Dbus services for session:"
 dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames
 echo "See https://github.com/taviso/dbusmap for additional dbus auditing!"
 }
+
 
 getsec() {
 echo "Let's see if there are any defences."
@@ -385,31 +436,6 @@ command -V aa-status >/dev/null 2>/dev/null
 	if grep -q PaX /proc/self/status; then
 	echo "GrSec and PaX live here."
 	fi
-}
-
-
-log2outp() {
-  # Runs a command and writes output to files in $OUTP.
-  # arguments: basename command command-arguments
-  # outputs: pipes stdout into $OUTP/basename.txt
-  #          pipes stderr into $OUTP/basename.err
-  #          logs basename and command call in $OUTP/log.txt
-  if [ ! -d "$OUTP" ]; then
-    echo 'output directory not defined or prepared'
-    return 1
-  fi
-  if [ $# -lt 1 ]; then
-    echo 'missing basename of the output files'
-    return 1
-  fi
-  echo "$@" >> "$OUTP/log.txt"
-  basename=$1
-  shift
-  if [ $# -lt 1 ]; then
-    echo 'missing command to execute'
-    return 1
-  fi
-  "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
 }
 
 
@@ -446,7 +472,7 @@ getinfo() {
   # The condition should work with POSIX sh and bash.
   # Variable EUID is defined in the bash.
   # Check EUID of /root works in dash (and in bash).
-  # shellcheck disable=SC2039
+  # shellcheck disable=SC2039,SC2169
   if [ "$EUID" = "0" ] || [ -O "/root" ]; then
     orc_log2outp shadow getent shadow
     orc_log2outp ssh_keys find /home/ -name id_rsa
@@ -480,26 +506,20 @@ timedshell() {
 echo "scheduling a reverse shell to launch later..."
 }
 
-listusers() {
-  # Listing users in passwd with login shells.
-  # Reject shells named *nologin or *false as valid shells.
-  getent passwd |
-  awk -F ':' '
-     NF==1 && $1 !~ /^#|nologin$|false$/ {shells[$1]=1}
-     $7 in shells {print $1}' /etc/shells -
-}
 
 getusers() {
   echo "Listing valid users with shells."
-  listusers
+  orc_listusers
 }
+
 
 getuservices() {
   echo "Listing all running services with non-user accounts in passwd."
-  { listusers; ps --no-header -weFH; } |
+  { orc_listusers; ps --no-header -weFH; } |
   awk 'NF==1 {users[$1]=1}
        NF>1 && !($1 in users) {print}'
 }
+
 
 getspec() {
 printf "RAM available: "
@@ -512,24 +532,15 @@ printf "Disk usage:"
 df -h
 }
 
-ourpts() {
-  # Get our PTS.
-  # Writes nothing if not connected to a PTS.
-  mytty=$(tty)
-  mypts=${mytty#/dev/pts/}
-  # Check if it is a pts device
-  if [ "/dev/pts/$mypts" = "$mytty" ]; then
-    echo "$mypts"
-  fi
-}
 
 getidle() {
   # List all ptys and their idle times accurately.
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
   export our_pty
-  our_pty=$(ourpts)
-  stat "/dev/pts/*" -c '%n %X %U' |
+  our_pty=$(orc_ourpts)
+  # using stat and the shell glob, so no quotes
+  stat /dev/pts/* -c '%n %X %U' |
   awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
       gsub( /[^0-9]/, "", $1 )
       list[$1]="PTY " $1 " is " now-$2 " seconds idle and owned by " $3
@@ -735,7 +746,7 @@ hangup() {
     return 1
   fi
   if [ "$2" = "other" ]; then
-    NOT_THIS=$(ourpts)
+    NOT_THIS=$(orc_ourpts)
   else
     NOT_THIS=""
   fi
@@ -911,5 +922,5 @@ echo "=== Welcome to Orc Shell ==="
 echo "Run gethelp to see a list of commands."
 echo "$HOME should be deleted upon exit."
 PS1='$USER'"@$(hostname):"'$PWD'"$ " 
-NHOME=$(getent passwd | grep --color=never "$(id -u)" | cut -d: -f 6)
+NHOME=$(orc_home_of_currentuser)
 #rm $ENV
