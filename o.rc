@@ -716,20 +716,22 @@ orc_filterIpAddress() {
     match($0,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
        tmp = substr($0,RSTART,RLENGTH)
        if (match(tmp,/\..+\..+\./))
-          print(tmp) }
+          print tmp }
     match($0,/([a-f0-9]?[a-f0-9]?[a-f0-9]?[a-f0-9]?:)+[a-f0-9]+/) {
        tmp = substr($0,RSTART,RLENGTH)
        if (match(tmp,/:.*:.*:.*:.*:/) && match(tmp,/^..:..:..:..:..:..$/)==0)
-          print(tmp) }
+          print tmp }
     match($0,/([A-F0-9]?[a-f0-9]?[A-F0-9]?[A-F0-9]?:)+[A-F0-9]+/) {
        tmp = substr($0,RSTART,RLENGTH)
        if (match(tmp,/:.*:.*:.*:.*:/) && match(tmp,/^..:..:..:..:..:..$/)==0)
-          print(tmp) }'
+          print tmp }'
 }
 
 
 orc_listArp() {
   # List IP addresses in the ARP table.
+  # Arguments: None
+  # Output to stdout: List of IP addresses, one address per line
   if orc_existsProg arp; then
     # use short switches -a, -n because the long versions are not
     # supported on all systems, e.g. on busybox.
@@ -737,8 +739,49 @@ orc_listArp() {
   elif orc_existsProg ip; then
     ip neigh show | orc_filterIpAddress
   else
-    echo 'Can not list ARP content. Found no tool.'
+    echo 'Can not list ARP content. Found no tool' >&2
   fi
+}
+
+
+orc_listBroadcastAddress() {
+  # List the broadcast addresses of interfaces.
+  # Arguments: None
+  # Output to stdout: IPv4 broadcast addresses, one per line
+  if orc_existsProg ifconfig; then
+    # Attention: ifconfig output is different on the systems.
+    # The up/down status is not checked because it may fail on different
+    # output formats.
+    ifconfig |
+    awk 'match($0,/inet.* [Bb][Rr]?[Oo]?[Aa]?[Dd]?[Cc][Aa][Ss][Tt][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
+	  tmp = substr($0,RSTART,RLENGTH)
+          match(tmp,/[Bb][Rr]?[Oo]?[Aa]?[Dd]?[Cc][Aa][Ss][Tt][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
+	  tmp = substr(tmp,RSTART,RLENGTH)
+          match(tmp,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
+          print substr(tmp,RSTART,RLENGTH)
+          }'
+  elif orc_existsProg ip; then
+    ip addr show |
+    awk 'match($0,/inet.*[Bb][Rr][Dd][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
+          tmp = substr($0,RSTART,RLENGTH)
+          match(tmp,/[Bb][Rr][Dd][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
+          tmp = substr(tmp,RSTART,RLENGTH)
+          match(tmp,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
+          print substr(tmp,RSTART,RLENGTH)
+          }'
+  else
+    echo "Can not list broadcast addresses. Found no tool" >&2
+  fi
+}
+
+
+orc_pingBroadcast() {
+  # Ping the Broadcast IP addresses of all interfaces.
+  # Arguments: None
+  # Output to stdout
+  for addr in $(orc_listBroadcastAddress); do
+    ping -c 3 -i 10 -b $addr
+  done
 }
 
 
@@ -746,6 +789,9 @@ getnet2() {
   echo "Let's see what we can find on the network..."
   echo 'IPv4 and IPv6 addresses in the ARP table:'
   orc_listArp
+  echo 'Pinging broadcast.'
+  echo 'Please wait...'
+  orc_pingBroadcast
 }
 
 
