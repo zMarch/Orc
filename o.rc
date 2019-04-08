@@ -696,6 +696,58 @@ prochide() {
   bash -c "exec -a \"$LONGARG\" $*"
 }
 
+# ~~~ Working section getnet~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Create the new getnet function here.
+# First place all needed help functions here. Later move the functions
+# into the correct positions in the file.
+
+
+orc_filterIpAddress() {
+  # Filter strings looks like an IPv4 or IPv6 address.
+  # Maximal one address per line is expected.
+  # Arguments: none
+  # Reads stdin and writes to stdout
+  # Attention: match(s,p,a) is not supported by mawk.
+  # Pattern repeat operator {n} is not supported by mawk.
+  awk '{if (match($0,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) > 0)
+           { tmp=substr($0,RSTART,RLENGTH)
+             if (match(tmp,/\..+\..+\./) > 0)
+               print(tmp) }
+       if (match($0,/(([a-f0-9][a-f0-9][a-f0-9][a-f0-9])?:)+[a-f0-9]+/) > 0)
+         { tmp=substr($0,RSTART,RLENGTH)
+           if (match(tmp,/:.*:.*:.*:.*:/) > 0)
+             print(tmp) }
+       if (match($0,/(([A-F0-9][a-f0-9][A-F0-9][A-F0-9])?:)+[A-F0-9]+/) > 0)
+         { tmp=substr($0,RSTART,RLENGTH)
+           if (match(tmp,/:.*:.*:.*:.*:/) > 0)
+             print(tmp) }
+       }'
+}
+
+
+orc_listArp() {
+  # List IP addresses in the ARP table.
+  if orc_existsProg arp; then
+    # use short switches -a, -n because the long versions are not
+    # supported on all systems, e.g. on busybox.
+    arp -na | orc_filterIpAddress
+  elif orc_existsProg ip; then
+    ip neigh show | orc_filterIpAddress
+  else
+    echo 'Can not list ARP content. Found no tool.'
+  fi
+}
+
+
+getnet2() {
+  echo "Let's see what we can find on the network..."
+  echo 'IPv4 and IPv6 addresses in the ARP table:'
+  orc_listArp
+}
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 getnet() (
 #i'm sorry
 
