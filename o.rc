@@ -785,6 +785,74 @@ orc_pingBroadcast() {
 }
 
 
+orc_listHomes() {
+  # List the home directories of the users.
+  # Argument: None.
+  # Output to stdout: One home directory per line.
+  getent passwd |
+  awk -F ':' 'hit[$6] == 0 {hit[$6]=1; print $6}' |
+  while read -r i; do
+    if [ -d "$i" ]; then
+      echo "$i"
+    fi
+  done
+}
+
+
+orc_flatFileName() {
+  # Translate a file name with path into a simple name.
+  # Argument: A file name with path.
+  # Output to stdout: The name with slashes replaced by underlines.
+  echo "$1" | tr '/' '_'
+}
+
+
+orc_testAndCopy() {
+  # Test read access, then copy.
+  # Arguments: File to copy.
+  #            Destination directory.
+  if [ $# -ne 2 ]; then
+    echo 'need two arguments: file and destination' >&2
+    return 1
+  fi
+  if [ ! -d "$2" ]; then
+    echo "2nd parameter ($2) must be a directory" >&2
+    return 1
+  fi
+  if [ -r "$1" ]; then
+    cp "$1" "$2/$(orc_flatFileName "$1")"
+  fi
+}
+
+
+orc_collectOtherHostsInfo() {
+  # Collect files containing info about other hosts.
+  # Arguments: None
+  # Output to $HOME/kh archive file
+  # Collect output files in $OUTP
+  OUTP=$HOME/files/
+  mkdir --mode 700 "$OUTP"
+  echo 'collect all readable .ssh/known_hosts files'
+  for i in $(orc_listHomes); do
+    orc_testAndCopy "$i/.ssh/known_hosts" "$OUTP"
+  done
+  echo 'try /etc/ssh/known_hosts file'
+  orc_testAndCopy /etc/ssh/known_hosts "$OUTP"
+  echo 'try /etc/hosts'
+  orc_testAndCopy /etc/hosts "$OUTP"
+  echo 'try /etc/lmhosts'
+  orc_testAndCopy /etc/lmhosts "$OUTP"
+  # Stores all single files in one archive file.
+  if orc_archive "$HOME/kh" "$OUTP"; then
+    echo "Find the collected files in $ORC_ARCHIVE_FILE"
+    # Remove the single files. Keep only the archive file.
+    rm -rf "$OUTP"
+  else
+    echo "Error, can not archive, the files are in $OUTP"
+  fi
+}
+
+
 getnet2() {
   echo "Let's see what we can find on the network..."
   echo 'IPv4 and IPv6 addresses in the ARP table:'
@@ -792,6 +860,8 @@ getnet2() {
   echo 'Pinging broadcast.'
   echo 'Please wait...'
   orc_pingBroadcast
+  echo "Pulling known hosts from some files and writing to $HOME/kh..."
+  orc_collectOtherHostsInfo
 }
 
 
