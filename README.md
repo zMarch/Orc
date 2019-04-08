@@ -31,6 +31,8 @@ HOWEVER. An overview:
 
 - getinfo pulls basically everything useful and generic i could think of and sticks it in a tar.xz file for you. ([Wiki](https://github.com/zMarch/Orc/wiki/getinfo))
 
+- getluks uses lsblk to look for partitions of type crypt, indicating disk crypto.
+
 - getrel prints the OS name from the release file. ([Wiki](https://github.com/zMarch/Orc/wiki/getrel))
 
 - getip uses HTTP and DNS to get your external IP. It aims to use curl and dig, but will fall back to wget and host if it needs to. It grabs these from Akami and Google respectively to try and avoid using smaller sites that might flag in a SOC's logs or alerts. ([Wiki](https://github.com/zMarch/Orc/wiki/getip))

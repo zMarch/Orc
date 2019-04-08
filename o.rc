@@ -520,6 +520,13 @@ getuservices() {
        NF>1 && !($1 in users) {print}'
 }
 
+getluks() {
+if hash lsblk 2>/dev/null; then
+	if lsblk -al | awk '{print $6}' | grep -q "crypt"; then
+	echo "Encrypted partition detected. Run lsblk to see more."
+	fi
+fi
+}
 
 getspec() {
 printf "RAM available: "
