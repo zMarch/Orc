@@ -525,6 +525,10 @@ if hash lsblk 2>/dev/null; then
 	if lsblk -al | awk '{print $6}' | grep -q "crypt"; then
 	echo "Encrypted partition detected. Run lsblk to see more."
 	fi
+elif hash dmesg 2>/dev/null; then
+	if dmesg -T | grep -i Boot_image | grep -qi "rd.luks.uuid"; then
+	echo "Encrypted partition detected. No lsblk found. Investigate manuallt."
+	fi
 fi
 }
 
@@ -844,6 +848,7 @@ echo "A probably non-comprehensive list of functionality in Orc v$OVERSION."
 echo "[*] getenum - get kernel, glibc, and dbus versions"
 echo "[*] getinfo - create a tar.xz of useful command output"
 echo "[*] getrel - attempt to get the OS release file."
+echo "[*] getluks - attempt to detect disk crypto with lsblk or dmesg"
 echo "[*] getip - get external IP from akamai and google (HTTP and DNS)"
 echo "[*] getjail - check if we're in a chroot/VM"
 echo "[*] getsec - check if the big three security MAC programs are around"
