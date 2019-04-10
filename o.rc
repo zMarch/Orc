@@ -791,6 +791,19 @@ hangup() {
   done
 }
 
+getdocker () {
+if [ -S "/var/run/docker.sock" ]; then
+	if [ -w "/var/run/docker.sock" ]; then
+		echo "Listing docker images..."
+		docker ps
+	else
+		echo "Docker socket exists, but we don't have access."
+	fi
+else
+	echo "Don't see the docker socket. No Docker?"
+fi 	
+}
+
 getexploit () {
   # Download and run linux-exploit-suggester.
   # need a better way to do this, honestly
@@ -848,6 +861,7 @@ echo "A probably non-comprehensive list of functionality in Orc v$OVERSION."
 echo "[*] getenum - get kernel, glibc, and dbus versions"
 echo "[*] getinfo - create a tar.xz of useful command output"
 echo "[*] getrel - attempt to get the OS release file."
+echo "[*] getdocker - check docker socket status, and list images."
 echo "[*] getluks - attempt to detect disk crypto with lsblk or dmesg"
 echo "[*] getip - get external IP from akamai and google (HTTP and DNS)"
 echo "[*] getjail - check if we're in a chroot/VM"
