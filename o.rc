@@ -758,7 +758,7 @@ orc_listBroadcastAddress() {
     # The up/down status is not checked because it may fail on different
     # output formats.
     ifconfig |
-    mawk '
+    awk '
       match($0,/inet.* broadcast +([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
         # ifconfig version nettools 2.10
         split(substr($0,RSTART,RLENGTH),tmp )
