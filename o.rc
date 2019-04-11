@@ -703,6 +703,34 @@ prochide() {
 
 # >> compatibility layer
 
+#
+# orc_local
+#
+# Local variables are a useful help but some shells support 'local',
+# some shells support 'typeset' and some shells support both.
+# Here the alias orc_local is defined to ensure a wide support.
+# Use orc_local only in the form 'orc_local var' not in the form
+# 'orc_local var=value' because the second form is not supported by
+# all shells. Also orc_local should be the first statement in a
+# function.
+#
+if command -v local > /dev/null; then
+  # dash, bash, ash, mksh supports local
+  alias orc_local='local'
+elif command -v typeset > /dev/null; then
+  # ksh, mksh, bash supports typeset
+  alias orc_local='typeset'
+else
+  alias orc_local='orc_noop'
+  echo "Warning: no local variables could cause trouble" >&2
+fi
+
+
+orc_noop() {
+  # No operation.
+  return
+}
+
 
 orc_listArp() {
   # List IP addresses in the ARP table.
@@ -725,27 +753,26 @@ orc_listBroadcastAddress() {
   # List the broadcast addresses of interfaces.
   # Arguments: None
   # Output to stdout: IPv4 broadcast addresses, one per line
-  if orc_existsProg ifconfig; then
+  if orc_existsProg ifconfigXXXX; then
     # Attention: ifconfig output is different on the systems.
     # The up/down status is not checked because it may fail on different
     # output formats.
     ifconfig |
-    awk 'match($0,/inet.* [Bb][Rr]?[Oo]?[Aa]?[Dd]?[Cc][Aa][Ss][Tt][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
-	  tmp = substr($0,RSTART,RLENGTH)
-          match(tmp,/[Bb][Rr]?[Oo]?[Aa]?[Dd]?[Cc][Aa][Ss][Tt][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
-	  tmp = substr(tmp,RSTART,RLENGTH)
-          match(tmp,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
-          print substr(tmp,RSTART,RLENGTH)
-          }'
+    mawk '
+      match($0,/inet.* broadcast +([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
+        # ifconfig version nettools 2.10
+        split(substr($0,RSTART,RLENGTH),tmp )
+        print tmp[2] }
+      match($0,/Bcast[: ]+([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
+        # ifconfig version busybox 1.27
+        split(substr($0,RSTART,RLENGTH),tmp,/[: ]+/)
+        print tmp[2] }'
   elif orc_existsProg ip; then
     ip addr show |
-    awk 'match($0,/inet.*[Bb][Rr][Dd][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
-          tmp = substr($0,RSTART,RLENGTH)
-          match(tmp,/[Bb][Rr][Dd][: ]*([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
-          tmp = substr(tmp,RSTART,RLENGTH)
-          match(tmp,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/)
-          print substr(tmp,RSTART,RLENGTH)
-          }'
+    awk '
+      match($0,/brd +([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
+        split(substr($0,RSTART,RLENGTH),tmp)
+        print tmp[2] }'
   else
     echo 'Error: can not list broadcast addresses. Found no tool' >&2
   fi
@@ -804,17 +831,20 @@ orc_filterIpAddress() {
       # it is a IPv4 address
       tmp = substr($0,RSTART,RLENGTH)
       if (match(tmp,/\..+\..+\./))
-        print tmp }
+        print tmp
+        next }
     match($0,/([a-f0-9]?[a-f0-9]?[a-f0-9]?[a-f0-9]?:)+[a-f0-9]+/) {
       # it is a IPv6 address or an ethernet address with lower case letters
       tmp = substr($0,RSTART,RLENGTH)
       if (match(tmp,/:.*:.*:.*:.*:/) && match(tmp,/^..:..:..:..:..:..$/)==0)
-        print tmp }
-    match($0,/([A-F0-9]?[a-f0-9]?[A-F0-9]?[A-F0-9]?:)+[A-F0-9]+/) {
+        print tmp
+        next }
+    match($0,/([A-F0-9]?[A-F0-9]?[A-F0-9]?[A-F0-9]?:)+[A-F0-9]+/) {
       # it is a IPv6 address or an ethernet address with upper case letters
       tmp = substr($0,RSTART,RLENGTH)
       if (match(tmp,/:.*:.*:.*:.*:/) && match(tmp,/^..:..:..:..:..:..$/)==0)
-        print tmp }'
+        print tmp
+        next }'
 }
 
 
@@ -822,6 +852,7 @@ orc_pingBroadcast() {
   # Ping the Broadcast IP addresses of all interfaces.
   # Arguments: None
   # Output to stdout
+  orc_local addr
   for addr in $(orc_listBroadcastAddress); do
     ping -c 3 -i 10 -b "$addr"
   done
@@ -832,13 +863,14 @@ orc_listHomes() {
   # List the home directories of the users.
   # Argument: None.
   # Output to stdout: One home directory per line.
+  orc_local dir
   getent passwd |
   # filter: home directory in field 6, directory only once
   awk -F ':' 'hit[$6] == 0 {hit[$6]=1; print $6}' |
   # filter: only existing directories, no dummy entries
-  while read -r i; do
-    if [ -d "$i" ]; then
-      echo "$i"
+  while read -r dir; do
+    if [ -d "$dir" ]; then
+      echo "$dir"
     fi
   done
 }
@@ -875,11 +907,12 @@ orc_collectOtherHostsInfo() {
   # Arguments: None
   # Output to $HOME/kh archive file
   # Collect output files in $OUTP
-  OUTP=$HOME/files/
+  orc_local dir
+  OUTP="$HOME/files/"
   mkdir --mode 700 "$OUTP"
   echo 'collect all readable .ssh/known_hosts files'
-  for i in $(orc_listHomes); do
-    orc_testAndCopy "$i/.ssh/known_hosts" "$OUTP"
+  for dir in $(orc_listHomes); do
+    orc_testAndCopy "$dir/.ssh/known_hosts" "$OUTP"
   done
   echo 'try /etc/ssh/known_hosts file'
   orc_testAndCopy /etc/ssh/known_hosts "$OUTP"
@@ -902,27 +935,28 @@ orc_IP4toInteger() {
   # Converts a IPv4 address into a number.
   # Argument: IPv4 address
   # Output to stdout: integer number
+  orc_local str value
   if [ $# -ne 1 ]; then
     echo 'Error: IPv4 address must be given as argument' >&2
     return 1
   fi
   # get first number by removing the last 3 numbers
-  orc_tmp_value=${1%.*.*.*}
-  if [ "$orc_tmp_value" = "" ]; then
+  value=${1%.*.*.*}
+  if [ "$value" = "" ]; then
     echo 'Error: no IPv4 address given' >&2
     return 1
   fi
   # get the last 2 numbers by removing the first number
-  orc_tmp_str="${1#*.}"
+  str="${1#*.}"
   # the second number
-  orc_tmp_value=$(( orc_tmp_value * 256 + ${orc_tmp_str%.*.*} ))
-  orc_tmp_str="${orc_tmp_str#*.}"
+  value=$(( value * 256 + ${str%.*.*} ))
+  str="${str#*.}"
   # the third number
-  orc_tmp_value=$(( orc_tmp_value * 256 + ${orc_tmp_str%.*} ))
-  orc_tmp_str="${orc_tmp_str#*.}"
+  value=$(( value * 256 + ${str%.*} ))
+  str="${str#*.}"
   # the last number
-  orc_tmp_value=$(( orc_tmp_value * 256 + orc_tmp_str ))
-  echo $orc_tmp_value
+  value=$(( value * 256 + str ))
+  echo $value
 }
 
 
@@ -930,6 +964,7 @@ orc_integerToIP4() {
   # Converts a number into an IPv4 address
   # Argument: integer number
   # Output to stdout: IPv4 address in dotted format.
+  orc_local str value
   if [ $# -ne 1 ]; then
     echo 'Error: number must given as argument' >&2
     return 1
@@ -938,15 +973,15 @@ orc_integerToIP4() {
     echo 'Error: number out of range' >&2
     return 1
   fi
-  orc_tmp_str="$(( $1 % 256 ))"
-  orc_tmp_value=$(( ($1 - ($1 % 256)) / 256 ))
-  orc_tmp_str="$(( orc_tmp_value % 256 )).$orc_tmp_str"
-  orc_tmp_value=$(( (orc_tmp_value - (orc_tmp_value % 256)) / 256 ))
-  orc_tmp_str="$(( orc_tmp_value % 256 )).$orc_tmp_str"
-  orc_tmp_value=$(( (orc_tmp_value - (orc_tmp_value % 256)) / 256 ))
-  orc_tmp_str="$(( orc_tmp_value % 256 )).$orc_tmp_str"
-  orc_tmp_value=$(( (orc_tmp_value - (orc_tmp_value % 256)) / 256 ))
-  echo "$orc_tmp_str"
+  str="$(( $1 % 256 ))"
+  value=$(( ($1 - ($1 % 256)) / 256 ))
+  str="$(( value % 256 )).$str"
+  value=$(( (value - (value % 256)) / 256 ))
+  str="$(( value % 256 )).$str"
+  value=$(( (value - (value % 256)) / 256 ))
+  str="$(( value % 256 )).$str"
+  value=$(( (value - (value % 256)) / 256 ))
+  echo "$str"
 }
 
 
@@ -984,6 +1019,7 @@ orc_lengthToIP4netmask() {
   # Converts the fixed length number into the IPv4 bitmask.
   # Argument fixed length
   # Output to stdout: IPv4 bitmask
+  orc_local value counter
   if [ $# -ne 1 ]; then
     echo 'Error: fixed length size must be given' >&2
     return 1
@@ -992,14 +1028,14 @@ orc_lengthToIP4netmask() {
     echo 'Error: length out of range' >&2
     return 1
   fi
-  orc_tmp_value=0
-  orc_tmp_counter=$1
-  while [ "$orc_tmp_counter" -gt 0 ]; do
-    orc_tmp_counter=$(( orc_tmp_counter - 1 ))
+  value=0
+  counter=$1
+  while [ "$counter" -gt 0 ]; do
+    counter=$(( counter - 1 ))
     # shift current bits 1 right and set the topmost bit to 1.
-    orc_tmp_value=$(( (orc_tmp_value >> 1) + 2147483648 ))
+    value=$(( (value >> 1) + 2147483648 ))
   done
-  orc_integerToIP4 $orc_tmp_value
+  orc_integerToIP4 $value
 }
 
 
@@ -1008,28 +1044,31 @@ orc_pingIP4Localnet() {
   # and protocol if host is alive.
   # Arguments: One IPv4 address in dotted format
   #            The netmask in dotted format
+  orc_local myaddr mask value lastvalue address
   if [ $# -ne 2 ]; then
     echo 'need address and netmask as arguments' >&2
     return 1;
   fi
-  orc_tmp_addr=$(orc_IP4toInteger "$1")
-  orc_tmp_mask=$(orc_IP4toInteger "$2")
-  orc_tmp_value=$(orc_firstIp4integer "$orc_tmp_addr" "$orc_tmp_mask")
-  orc_tmp_last=$(orc_lastIP4integer "$orc_tmp_addr" "$orc_tmp_mask")
-  while [ "$orc_tmp_value" -le "$orc_tmp_last" ]; do
-    orc_tmp_ip=$(orc_integerToIP4 "$orc_tmp_value")
-    if ping -c1 -n "$orc_tmp_ip" > /dev/null
+  myaddr=$(orc_IP4toInteger "$1")
+  mask=$(orc_IP4toInteger "$2")
+  value=$(orc_firstIp4integer "$myaddr" "$mask")
+  lastvalue=$(orc_lastIP4integer "$myaddr" "$mask")
+  while [ "$value" -le "$lastvalue" ]; do
+    address=$(orc_integerToIP4 "$value")
+    if ping -c1 -n "$address" > /dev/null
     then
-      echo "$orc_tmp_ip is alive"
+      echo "$address is alive"
     fi
-    orc_tmp_value=$(( orc_tmp_value + 1 ))
+    value=$(( value + 1 ))
   done
 }
 
 
 # >> the user level function
 
+
 getnet2() {
+  orc_local addr mask
   echo "Let's see what we can find on the network..."
   echo 'IPv4 and IPv6 addresses in the ARP table:'
   orc_listArp
@@ -1039,6 +1078,11 @@ getnet2() {
   echo "Broadcast ping is done."
   echo "Pulling known hosts from some files and writing to $HOME/kh ..."
   orc_collectOtherHostsInfo
+  if [ $((256*256*256*128)) -lt 0 ]; then
+    echo 'Warning: no 64 bit integers in the shell.
+       Can not calculate IP addresses' >&2
+    return 1
+  fi
   echo "Pinging local IPv4 addresse in background writing $HOME/ips ..."
   orc_inetAddressAndMask |
    while read -r addr mask; do
