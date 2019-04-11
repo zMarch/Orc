@@ -753,7 +753,7 @@ orc_listBroadcastAddress() {
   # List the broadcast addresses of interfaces.
   # Arguments: None
   # Output to stdout: IPv4 broadcast addresses, one per line
-  if orc_existsProg ifconfigXXXX; then
+  if orc_existsProg ifconfig; then
     # Attention: ifconfig output is different on the systems.
     # The up/down status is not checked because it may fail on different
     # output formats.
