@@ -1078,6 +1078,11 @@ getnet2() {
   echo "Broadcast ping is done."
   echo "Pulling known hosts from some files and writing to $HOME/kh ..."
   orc_collectOtherHostsInfo
+  if [ $((256*256*256*128)) -lt 0 ]; then
+    echo 'Warning: no 64 bit integers in the shell.
+       Can not calculate IP addresses' >&2
+    return 1
+  fi
   echo "Pinging local IPv4 addresse in background writing $HOME/ips ..."
   orc_inetAddressAndMask |
    while read -r addr mask; do
