@@ -949,13 +949,13 @@ orc_IP4toInteger() {
   # get the last 2 numbers by removing the first number
   str="${1#*.}"
   # the second number
-  value=$(( value * 256 + ${str%.*.*} ))
+  value=$(( (value << 8) | ${str%.*.*} ))
   str="${str#*.}"
   # the third number
-  value=$(( value * 256 + ${str%.*} ))
+  value=$(( (value << 8) | ${str%.*} ))
   str="${str#*.}"
   # the last number
-  value=$(( value * 256 + str ))
+  value=$(( (value << 8) | str ))
   echo $value
 }
 
@@ -969,18 +969,14 @@ orc_integerToIP4() {
     echo 'Error: number must given as argument' >&2
     return 1
   fi
-  if [ "$1" -lt 1 ] || [ "$1" -gt 4294967296 ]; then
-    echo 'Error: number out of range' >&2
-    return 1
-  fi
-  str="$(( $1 % 256 ))"
-  value=$(( ($1 - ($1 % 256)) / 256 ))
-  str="$(( value % 256 )).$str"
-  value=$(( (value - (value % 256)) / 256 ))
-  str="$(( value % 256 )).$str"
-  value=$(( (value - (value % 256)) / 256 ))
-  str="$(( value % 256 )).$str"
-  value=$(( (value - (value % 256)) / 256 ))
+  str="$(( $1 & 255 ))"
+  value=$(( $1 >> 8 ))
+  str="$(( value & 255 )).$str"
+  value=$(( value >> 8 ))
+  str="$(( value & 255 )).$str"
+  value=$(( value >> 8 ))
+  str="$(( value & 255 )).$str"
+  value=$(( value >> 8 ))
   echo "$str"
 }
 
@@ -996,7 +992,7 @@ orc_firstIp4integer() {
   fi
   # +1 because all bits 0 outside the bitmask is not allowed, it
   # is the address of the subnet, not of a host.
-  echo $(( ($1 & $2) + 1 ))
+  echo $(( ($1 & $2) | 1 ))
 }
 
 
@@ -1009,9 +1005,9 @@ orc_lastIP4integer() {
     echo 'Error: address and netmask must be given' >&2
     return 1
   fi
-  # 4294967295 = 31 bits 1 and last bit 0. All bits 1 outside the
+  # ~1 = 31 bits 1 and last bit 0. All bits 1 outside the
   # netmask is the broadcast address of the subnet.
-  echo $(( ($1 & $2) + (4294967295 & ~$2) ))
+  echo $(( ($1 & $2) | (~1 & ~$2) ))
 }
 
 
@@ -1019,7 +1015,7 @@ orc_lengthToIP4netmask() {
   # Converts the fixed length number into the IPv4 bitmask.
   # Argument fixed length
   # Output to stdout: IPv4 bitmask
-  orc_local value counter
+  orc_local value counter topbit
   if [ $# -ne 1 ]; then
     echo 'Error: fixed length size must be given' >&2
     return 1
@@ -1030,16 +1026,17 @@ orc_lengthToIP4netmask() {
   fi
   value=0
   counter=$1
+  topbit=$(( 1 << 31 ))
   while [ "$counter" -gt 0 ]; do
     counter=$(( counter - 1 ))
     # shift current bits 1 right and set the topmost bit to 1.
-    value=$(( (value >> 1) + 2147483648 ))
+    value=$(( (value >> 1) | $topbit ))
   done
   orc_integerToIP4 $value
 }
 
 
-orc_pingIP4Localnet() {
+orc_pingIP4localnet() {
   # Ping all local IPv4 addresses
   # and protocol if host is alive.
   # Arguments: One IPv4 address in dotted format
@@ -1053,11 +1050,14 @@ orc_pingIP4Localnet() {
   mask=$(orc_IP4toInteger "$2")
   value=$(orc_firstIp4integer "$myaddr" "$mask")
   lastvalue=$(orc_lastIP4integer "$myaddr" "$mask")
-  while [ "$value" -le "$lastvalue" ]; do
+  while [ 1 ]; do
     address=$(orc_integerToIP4 "$value")
     if ping -c1 -n "$address" > /dev/null
     then
       echo "$address is alive"
+    fi
+    if [ "$value" -eq "$lastvalue" ]; then
+      break;
     fi
     value=$(( value + 1 ))
   done
@@ -1078,16 +1078,11 @@ getnet2() {
   echo "Broadcast ping is done."
   echo "Pulling known hosts from some files and writing to $HOME/kh ..."
   orc_collectOtherHostsInfo
-  if [ $((256*256*256*128)) -lt 0 ]; then
-    echo 'Warning: no 64 bit integers in the shell.
-       Can not calculate IP addresses' >&2
-    return 1
-  fi
   echo "Pinging local IPv4 addresse in background writing $HOME/ips ..."
   orc_inetAddressAndMask |
    while read -r addr mask; do
      echo "Pinging subnet around $addr with mask $mask"
-     ( orc_pingIP4Localnet "$addr" "$mask"  >> $HOME/ips )&
+     ( orc_pingIP4localnet "$addr" "$mask"  >> $HOME/ips )&
    done
 }
 
