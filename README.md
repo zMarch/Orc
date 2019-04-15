@@ -31,9 +31,9 @@ HOWEVER. An overview:
 
 - getinfo pulls basically everything useful and generic i could think of and sticks it in a tar.xz file for you. ([Wiki](https://github.com/zMarch/Orc/wiki/getinfo))
 
-- getdocker checks if the docker socket in /var/run/docker.sock exists, if we have write access, and then if we do, runs docker ps
+- getdocker checks if the docker socket in /var/run/docker.sock exists, if we have write access, and then if we do, runs docker ps. ([Wiki](https://github.com/zMarch/Orc/wiki/getdocker))
 
-- getluks uses lsblk to look for partitions of type crypt, indicating disk crypto.
+- getluks uses lsblk to look for partitions of type crypt, indicating disk crypto. ([Wiki](https://github.com/zMarch/Orc/wiki/getluks))
 
 - getrel prints the OS name from the release file. ([Wiki](https://github.com/zMarch/Orc/wiki/getrel))
 
