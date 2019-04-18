@@ -857,38 +857,40 @@ gettmp () {
 
 
 gethelp() {
-echo "A probably non-comprehensive list of functionality in Orc v$OVERSION."
-echo "[*] getenum - get kernel, glibc, and dbus versions"
-echo "[*] getinfo - create a tar.xz of useful command output"
-echo "[*] getrel - attempt to get the OS release file."
-echo "[*] getdocker - check docker socket status, and list images."
-echo "[*] getluks - attempt to detect disk crypto with lsblk or dmesg"
-echo "[*] getip - get external IP from akamai and google (HTTP and DNS)"
-echo "[*] getjail - check if we're in a chroot/VM"
-echo "[*] getsec - check if the big three security MAC programs are around"
-echo "[*] gettmp - list typical directories for tmp files"
-echo "[*] getusers - pull all users with a shell"
-echo "[*] getpty - pop a pty with script"
-echo "[*] getidle - list all ptys and their idle times accurately."
-echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
-echo "[*] getsuspect - pull my suspect tool from github."
-echo "[*] getspec - grab some hardware information."
-echo "[*] getuservices - list all running services with non-user accounts in passwd"
-echo "[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem."
-echo "[*] getdbus - list all dbus services."
-echo "[*] getexploit - download and run linux-exploit-suggester"
-echo "[*] memexec - execute a binary in-memory from a webserver - memexec [full URI] (x64 only)"
-echo "[*] portscan - run a portscan against common ports - portscan [host]"
-echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]"
-echo "[*] srm - alias for secure shredding of files."
-echo "[*] qsu - sudo without a tty - qsu [password] [normal arguments]"
-echo "[*] qssh - ssh without a tty - qssh [password] [normal arguments]"
-echo "[*] wiper - remove entries from wtmp - wiper [string to grep out]"
-echo "[*] fpssh - pull ssh remote host fingerprints - fpssh [host]"
-echo "[*] stomp - alias for touch -r (needs arguments)"
-echo "[*] tools - check for common tools"
-echo "[*] dropsuid - drop tiny suid shell - dropsuid > [file]"
-echo "[*] hangup - terminate someones PTS by killing their SSH process. Very loud, DO NOT USE. - hangup [PTS NUMBER]"
+echo "
+A probably non-comprehensive list of functionality in Orc v$OVERSION.
+[*] getenum - get kernel, glibc, and dbus versions
+[*] getinfo - create a tar.xz of useful command output
+[*] getrel - attempt to get the OS release file.
+[*] getdocker - check docker socket status, and list images.
+[*] getluks - attempt to detect disk crypto with lsblk or dmesg
+[*] getip - get external IP from akamai and google (HTTP and DNS)
+[*] getjail - check if we're in a chroot/VM
+[*] getsec - check if the big three security MAC programs are around
+[*] gettmp - list typical directories for tmp files
+[*] getusers - pull all users with a shell
+[*] getpty - pop a pty with script
+[*] getidle - list all ptys and their idle times accurately.
+[*] getnet - attempt to enumerate hosts on the local network with ping
+[*] getsuspect - pull my suspect tool from github.
+[*] getspec - grab some hardware information.
+[*] getuservices - list all running services with non-user accounts in passwd
+[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem.
+[*] getdbus - list all dbus services.
+[*] getexploit - download and run linux-exploit-suggester
+[*] memexec - execute a binary in-memory from a webserver - memexec [full URI] (x64 only)
+[*] portscan - run a portscan against common ports - portscan [host]
+[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]
+[*] srm - alias for secure shredding of files.
+[*] qsu - sudo without a tty - qsu [password] [normal arguments]
+[*] qssh - ssh without a tty - qssh [password] [normal arguments]
+[*] wiper - remove entries from wtmp - wiper [string to grep out]
+[*] fpssh - pull ssh remote host fingerprints - fpssh [host]
+[*] stomp - alias for touch -r (needs arguments)
+[*] tools - check for common tools
+[*] dropsuid - drop tiny suid shell - dropsuid > [file]
+[*] hangup - terminate someones PTS by killing their SSH process. Very loud, DO NOT USE. - hangup [PTS NUMBER]
+"
 }
 
 # exit if home directory access is not possible
