@@ -18,7 +18,7 @@ orc_existsProg () {
   # Argument: Program/command name to check.
   # Exit status: 0 if one ore more programs do not exists.
   if [ $# -lt 1 ]; then
-    echo 'Error: missing program name to check.'
+    echo 'Error: missing program name to check' >&2
     return 1;
   fi
   hash "$@" > /dev/null 2> /dev/null
@@ -31,7 +31,7 @@ orc_loadURL () {
   # Output to stdout: The content of the URL document.
   # Global: http(s)_proxy variables will be used.
   if [ $# -ne 1 ]; then
-    echo 'Error: argument must be one URL to load'
+    echo 'Error: argument must be one URL to load' >&2
     return 1
   fi
   # A proxy could be set via environment variables to the tools.
@@ -42,7 +42,7 @@ orc_loadURL () {
   export HTTP_PROXY
   if [ -n "$http_proxy" ]; then
     if [ -n "$HTTP_PROXY" ] && [ "$HTTP_PROXY" != "$http_proxy" ]; then
-      echo 'Warning, ignore HTTP_PROXY value and use http_proxy value.'
+      echo 'Warning: ignore HTTP_PROXY value and use http_proxy value' >&2
     fi
     HTTP_PROXY=$http_proxy
   elif [ -n "$HTTP_PROXY" ]; then
@@ -52,7 +52,7 @@ orc_loadURL () {
   export HTTPS_PROXY
   if [ -n "$https_proxy" ]; then
     if [ -n "$HTTPS_PROXY" ] && [ "$HTTPS_PROXY" != "$https_proxy" ]; then
-      echo 'Warning, ignore HTTPS_PROXY value and use https_proxy value.'
+      echo 'Warning: ignore HTTPS_PROXY value and use https_proxy value' >&2
     fi
     HTTPS_PROXY=$https_proxy
   elif [ -n "$HTTPS_PROXY" ]; then
@@ -76,7 +76,7 @@ request = urllib2.urlopen(sys.argv[1])
 sys.stdout.write(request.read())
     ' "$1"
   else
-    echo 'Error: no download tool found'
+    echo 'Error: no download tool found' >&2
     return 1
   fi
 }
@@ -87,7 +87,7 @@ orc_tryTcpConnection () {
   #           TCP port number
   # Return: 0 if and ony if TCP connection could be opened
   if [ $# -ne 2 ]; then
-    echo 'Error: need host and TCP port as arguments'
+    echo 'Error: need host and TCP port as arguments' >&2
     return 1
   fi
   if orc_existsProg bash; then
@@ -127,7 +127,7 @@ sys.exit(0)
     # This is a bash extension. POSIX shell will not support this.
     bash -c "echo '' > /dev/tcp/$1/$2" 2>/dev/null
   else
-    echo 'Error: no tool to open TCP connection found'
+    echo 'Error: no tool to open TCP connection found' >&2
     return 1
   fi
 }
@@ -189,7 +189,7 @@ orc_makeHome() {
     fi
   done
   # no good home directory found. Use /dev/shm/.q as error fallback
-  echo 'Warning, found no good home directory, some functions may fail'
+  echo 'Warning: found no good home directory, some functions may fail' >&2
   HOME="/dev/shm/.q"
   mkdir $HOME 2>/dev/null
   }
@@ -203,11 +203,11 @@ orc_archive () {
   # Return:    0 if and only if archive file creation was ok.
   # Globals:   Set ORC_ARCHIV_FILE to the name of the created file.
   if [ $# -ne 2 ]; then
-    echo 'archiver needs two arguments'
+    echo 'Error: archiver needs two arguments' >&2
     return 1
   fi
   if [ ! -d "$2" ] || [ ! -r "$2" ]; then
-    echo "Error, archiver can not read $2"
+    echo "Error: archiver can not read $2" >&2
     return 1
   fi
   # Now no archive file exists. Reset any old content.
@@ -233,7 +233,7 @@ orc_archive () {
     zip -9Xrq "$1.zip" "$2" && ORC_ARCHIVE_FILE="$1.zip"
   fi
   if [ -z "$ORC_ARCHIVE_FILE" ]; then
-    echo 'Error, no working archive tool found'
+    echo 'Error: no working archive tool found' >&2
     return 1
   fi
 }
@@ -264,7 +264,7 @@ alias 'echo'='/bin/echo'
 # Create home directory and prepare remove at script exit
 orc_makeHome
 if [ ! -d "$HOME" ]; then
-  echo 'ERROR: can not find a home directory.'
+  echo 'Error: can not find a home directory' >&2
   exit 1
 fi
 trap 'rm -rf $HOME' EXIT TERM INT
@@ -287,7 +287,7 @@ if [ -r "$ENV" ]; then
   ENV=$(realpath "$ENV")
 fi
 if [ -z "$backup" ]; then
-  echo 'Warning, backup variable with script file is not available'
+  echo 'Warning: backup variable with script file is not available' >&2
 fi
 NHOME=""
 
@@ -297,18 +297,18 @@ orc_createEchoFile () {
   # Argument: Text to echo.
   # Global: set $ORC_ECHO_FILE to the created file.
   if [ $# -lt 1 ]; then
-    echo 'Error: missing text to echo.'
+    echo 'Error: missing text to echo' >&2
     return 1
   fi
   if [ "$HOME" = "" ]; then
-    echo 'Error, HOME variable is empty'
+    echo 'Error: HOME variable is empty' >&2
     return 1
   fi
   # Create the script file in the prepared HOME directory
   ORC_ECHO_FILE="$HOME/.c"
   echo '#!/bin/sh' > "$ORC_ECHO_FILE"
   if [ ! -r "$ORC_ECHO_FILE" ]; then
-    echo 'Error, can not create echo file'
+    echo 'Error: can not create echo file' >&2
     return 1
   fi
   # Limit access to the owner
@@ -325,14 +325,14 @@ orc_httpsProxyReminder() {
   # Output to stdout: Reminder.
   # Global: https_proxy variable is checked.
   if [ $# -ne 1 ]; then
-    echo 'Error: missing host name'
+    echo 'Error: missing host name' >&2
     return 1
   fi
   if [ -z "$https_proxy" ] && [ -z "$HTTPS_PROXY" ]; then
     # no proxy is defined.
     if ! orc_tryTcpConnection "$1" 443; then
       # no connection and no proxy: remind
-      echo 'Info: connection problem, https_proxy could be needed'
+      echo 'Info: connection problem, https_proxy could be needed' >&2
       return 2
     fi
   fi
@@ -348,18 +348,18 @@ orc_log2outp() {
   #          pipes stderr into $OUTP/basename.err
   #          logs basename and command call in $OUTP/log.txt
   if [ ! -d "$OUTP" ]; then
-    echo 'output directory not defined or prepared'
+    echo 'Error: output directory not defined or prepared' >&2
     return 1
   fi
   if [ $# -lt 1 ]; then
-    echo 'missing basename of the output files'
+    echo 'Error: missing basename of the output files' >&2
     return 1
   fi
   echo "$@" >> "$OUTP/log.txt"
   basename=$1
   shift
   if [ $# -lt 1 ]; then
-    echo 'missing command to execute'
+    echo 'Error: missing command to execute' >&2
     return 1
   fi
   "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
@@ -381,7 +381,7 @@ orc_home_of_userid () {
   # Argument: ID of the user.
   # Output to stdout: home directory
   if [ $# -ne 1 ]; then
-    echo 'argument user-id must be given'
+    echo 'Error: argument user-id must be given' >&2
     return 1
   fi
   getent passwd |
@@ -497,7 +497,7 @@ getinfo() {
     # Remove the single log files. Keep only the archive file.
     rm -rf "$OUTP"
   else
-    echo "Error, can not archive, the files are in $OUTP"
+    echo "Error: can not archive, the files are in $OUTP" >&2
   fi
 }
 
@@ -570,7 +570,7 @@ qssh() {
   #            arguments feed through to the ssh
   # Method: Creates a shell script file which echoes the password.
   if [ $# -lt 2 ]; then
-    echo 'Error, qssh needs at least password and command as arguments'
+    echo 'Error: qssh needs at least password and command as arguments' >&2
     return 1
   fi
   if tty | grep -q "not"; then
@@ -579,7 +579,7 @@ qssh() {
     # shellcheck disable=SC2029
     DISPLAY="" SSH_ASKPASS="$ORC_ECHO_FILE" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
   else
-    echo "You've got a tty. You can't use qssh."
+    echo 'Error: You have got a tty. You can not use qssh' >&2
   fi
 }
 
@@ -589,7 +589,7 @@ qsu() {
   #            arguments feed through to the sudo
   # Method: Creates a shell script file which echoes the password.
   if [ $# -lt 2 ]; then
-    echo 'Error, qsu needs at least password and command as arguments'
+    echo 'Error: qsu needs at least password and command as arguments' >&2
     return 1
   fi
   orc_createEchoFile "$1"
@@ -612,7 +612,7 @@ SHELL=$(command -v sh)
 if [ -r "$ENV" ]; then
   ENV="$ENV" script -c sh /dev/null
 else
-  echo "ENV not defined. Can not start script."
+  echo 'Error: ENV not defined. Can not start script' >&2
 fi
 }
 
@@ -621,7 +621,7 @@ getsuspect() {
   # ask and ye shall receive
   # this janky, awful shortcut
   if ! orc_existsProg bash; then
-    echo 'Error: bash needed but not found.'
+    echo 'Error: bash needed but not found' >&2
     return 1
   fi
   orc_httpsProxyReminder raw.githubusercontent.com
@@ -677,7 +677,7 @@ portscan() {
   # List ports which allow TCP connections.
   # Argument: Name or IP of the target box.
   if [ $# -ne 1 ]; then
-    echo 'Error, portscan needs one host name or host address'
+    echo 'Error: portscan needs one host name or host address' >&2
     return 1
   fi
   echo "Starting portscan of $1 ..."
@@ -753,7 +753,7 @@ hangup() {
   #            Or "all" to terminate all PTS connected via SSH.
   #            Or "all other" to terminate all but not our SSH.
   if [ $# -lt 1 ]; then
-    echo 'Error: hangup functions needs argument: ID number of PTS'
+    echo 'Error: hangup functions needs argument: ID number of PTS' >&2
     return 1
   fi
   if [ "$2" = "other" ]; then
@@ -775,13 +775,13 @@ hangup() {
     echo "Terminating $PTS_NAME"
     OWNER=$(stat -c '%U' "/dev/$PTS_NAME")
     if [ "$OWNER" = "" ]; then
-      echo "Something is wrong: can't get the owner of $PTS_NAME"
+      echo "Error: can't get the owner of $PTS_NAME" >&2
       continue
     fi
     echo "Owner of $PTS_NAME is $OWNER"
     SSHD_PID=$(pgrep -a sshd | grep "$PTS_NAME" | cut -d ' ' -f 1)
     if [ "$SSHD_PID" = "" ]; then
-      echo "Something is wrong: can't find SSHD PID of $PTS_NAME"
+      echo "Error: can't find SSHD PID of $PTS_NAME" >&2
       continue
     fi
     echo "SSHD PID is $SSHD_PID"
@@ -809,7 +809,7 @@ getexploit () {
   # need a better way to do this, honestly
   # i'd like to pass the -g argument to the script
   if ! orc_existsProg bash; then
-    echo 'Error: bash needed but not found.'
+    echo 'Error: bash needed but not found' >&2
     return 1
   fi
   orc_httpsProxyReminder raw.githubusercontent.com
