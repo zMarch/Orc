@@ -633,7 +633,7 @@ memexec() {
   # decode the perl script and run the script
   ( uudecode |
     gzip -d |
-    perl - $url '-' "$@"
+    perl - "$url" '-' "$@"
   ) << ====end
 begin-base64 660 -
 H4sIAOV7vVwAA41TS4vbMBC++1fMGkNscHDSZE26xktLD73kUDZ9HIMqj2OB
