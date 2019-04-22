@@ -623,31 +623,31 @@ memexec() {
     echo 'Error: memexec needs URL as argument' >&2
     return 1
   fi
+  # first argument is the URL to load
+  url="$1"
+  shift
+  if ! orc_existsProg base64 || ! orc_existsProg gzip; then
+    echo 'Error: need base64 and gzip to decode the script' >&2
+    return 1
+  fi
   if ! orc_existsProg perl; then
     echo 'Error: missing perl, can not execute in memory' >&2
     return 1
   fi
-  # first argument is the URL to load
-  url="$1"
-  shift
   # decode the perl script and run the script
-  ( uudecode |
+  ( base64 -d |
     gzip -d |
     perl - "$url" '-' "$@"
   ) << ====end
-begin-base64 660 -
-H4sIAOV7vVwAA41TS4vbMBC++1fMGkNscHDSZE26xktLD73kUDZ9HIMqj2OB
-LbmS3CQk7m+vHqFLCU16kNBo5ntoGEEwKIQ9kZzxnSpcpLRkVPvz+tunp6cN
-6/oW4cc+jgYCO9R2KS0kJr7qg+A12xVBd4RIHRUlbcsllDCdFwGr48jnT0TS
-hpMORyh/QXZY5dt8OW0ZHw5ZAqcA/gYv5m+DEbBV/2Rgi1V+A/+Y38OTW/rz
-xXJ2hyAmsjubhd/PxGbyZXLDz+rxDl0v9ijjnp57mi/d1uItwvyuP9Wbi7Pb
-b3tbrjwVulzFEMLPDVNg+ZhGqgeJYGIuNKih74XUWKUuXU6uxCdhAcEYmGmZ
-PivVbkWvVfwTJauP20YobYugfIZZCpvNenvJdKLyt4mfpEG2xppqWK1BSG+q
-Y0qZSTXCu6FDrlPQDcKXl3XoMb0Uu/8A2TJJOrBGLkjvCcJLWFeWxrcofu1V
-6gtTmCd+tG2dHfTktXGU8IkGKpFoBMIFh5q1BhI9hDA6cupe+ucXxe6tKYSZ
-8UWzKMrqKjPMIVxEXP1DCW9msyudVpDKCUAtRQcKpWlnaj4x0YMCiywd3mrj
-ASmcrmRG37f03fuXj1+L4DeY4yAAFAQAAA==
-====
+H4sIAGT3vVwAA41TzYrbMBC++ylmjSE2ODhpvCZd46Wlh15yKJu2ewyqPLYFsuVKcjchcZ+9lhS6
+LKFJDxJI8/1pGIE3KITN85eHhy1re47w8yUMBgI1arOUFhKj3KI+ia5ide61BwjUQVHCeSehgPky
+91gVBq5+JJI2HWlxhOI3JPt1tsvSOWfdsE8iOHrwlrxavvdGQK7+qcBW6+wK/z67xSfX/JerdHFD
+ICSyPU0Lf5yIqWRpdCXP+v6GXC9eUIY9PfU0S+3G8ZpgdjOf6qeLk92vZ0vXTgptrWQI/teGKTB6
+TCPVg0SYzp3QoIa+F1JjGdtyMbswn/k5eKM3Tcv8USm+E71W4S+UrDrsGqG0AUHxCIsYttvN7lxp
+ReluIzdJg+RTNNWwSoOQLlTLlGJdPRnXQ4udjkE3CN+eNr7j9FLU/0EyMElaMEHOTJcJ/POxKo2M
+a1H42qvYAWNYRm60Dc4MevTaOEq6mQYqkWgE0okOKsYnSnDnw2jFqX3p318U2rfG4CdTLpoEQVKV
+yaTsw9nE4u8KeLdYXPhwQUprAJUULSiUUztjUJroQYFhFpZvvHGPFI4XNqPrW/zh49Pn77n3B5pb
+L3z6AwAA
 ====end
 }
 
