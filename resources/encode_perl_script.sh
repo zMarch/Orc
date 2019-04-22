@@ -21,13 +21,13 @@ if [ $# -ne 1 ]; then
 fi
 
 # strip comment lines
-grep -v '^ *#' $1 |
+grep -v '^ *#' "$1" |
 # strip empty lines
 grep -v '^$' |
 # compress
 gzip --stdout - |
 # base64 uuencode
-uuencode --base64 - > $1.uu
+uuencode --base64 - > "$1.uu"
 
 echo "The compressed and encoded file is $1.uu"
 
