@@ -20,7 +20,7 @@ int main ( int argc, char** argv )
 {
   int i;
   puts( "The echo_arguments test program" );
-  fputs( "This is a outputline to stderr", stderr );
+  fputs( "This is a output line to stderr\n", stderr );
   for( i = 0; i < argc; ++i)
     printf( "argument %2d is '%s'\n", i, argv[i] );
   printf( "exit code of the test program is %d\n", argc-2 );
