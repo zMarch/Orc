@@ -25,15 +25,11 @@ orc_existsProg () {
   }
 
 
-orc_loadURL () {
-  # Loads from an URL via curl, wget or perl.
-  # Argument: The URL to download, https is supported.
-  # Output to stdout: The content of the URL document.
+orc_exportProxySettings () {
+  # Export http and https proxy settings in some formats.
+  # Arguments: None
   # Global: http(s)_proxy variables will be used.
-  if [ $# -ne 1 ]; then
-    echo 'Error: argument must be one URL to load' >&2
-    return 1
-  fi
+  #
   # A proxy could be set via environment variables to the tools.
   # But some tools in some versions needs lower case and some
   # needs upper case variable names. To increase portability
@@ -58,6 +54,19 @@ orc_loadURL () {
   elif [ -n "$HTTPS_PROXY" ]; then
     https_proxy=$HTTPS_PROXY
   fi
+}
+
+
+orc_loadURL () {
+  # Loads from an URL via curl, wget or perl.
+  # Argument: The URL to download, https is supported.
+  # Output to stdout: The content of the URL document.
+  # Global: http(s)_proxy variables will be used.
+  if [ $# -ne 1 ]; then
+    echo 'Error: argument must be one URL to load' >&2
+    return 1
+  fi
+  orc_exportProxySettings
   if orc_existsProg curl; then
     curl --silent --location --insecure -- "$1"
   elif orc_existsProg wget; then
