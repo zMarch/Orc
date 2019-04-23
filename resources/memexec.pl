@@ -2,7 +2,7 @@
 #
 # Load binary program or script file from web server.
 # Uses http or https protocol.
-# Execute the program or the scrupt without touching the
+# Execute the program or the script without touching the
 # file to a storage drive.
 # Stores the file in the process memory /proc/id.
 # A binary program must be compiled for the architecture of
