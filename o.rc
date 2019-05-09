@@ -13,7 +13,6 @@ OVERSION="0.6"
 #
 
 
-#
 # orc_local
 #
 # Local variables are a useful help but some shells support 'local',
@@ -23,7 +22,6 @@ OVERSION="0.6"
 # 'orc_local var=value' because the second form is not supported by
 # all shells. Also orc_local should be the first statement in a
 # function.
-#
 if command -v local > /dev/null; then
   # dash, bash, ash, mksh supports local
   alias orc_local='local'
@@ -41,6 +39,27 @@ orc_noop() {
   return
 }
 
+# orc_existsTestCommand
+#
+# A check for a program or shell command could be executed
+# by a hash or a type command. The hash command works in
+# the bash and dash but not in the ksh. The type command
+# works in bash, dash and ksh but is not POSIX conform.
+# So try to figure out which command works and define an
+# alias to the command.
+if hash ' not a program ' > /dev/null 2> /dev/null; then
+  alias orc_existsTestCommand='type'
+else
+  alias orc_existsTestCommand='hash'
+fi
+
+# Check the alias orc_existsTestCommand
+if orc_existsTestCommand ' not a program ' > /dev/null 2> /dev/null; then
+  echo 'Error: can not find a tool for program exist checks' >&2
+fi
+if ! orc_existsTestCommand cp > /dev/null 2> /dev/null; then
+  echo 'Error: can not find a tool for program exist checks' >&2
+fi
 
 orc_existsProg () {
   # Checks if a program/command exists.
@@ -50,10 +69,7 @@ orc_existsProg () {
     echo 'Error: missing program name to check' >&2
     return 1;
   fi
-  # The hash tool works on bash, dash, ash but on ksh
-  # the type tool is needed. On ksh "hash xyz" returns
-  # 0 also if the program xyz does not exists.
-  type "$@" > /dev/null 2> /dev/null
+  orc_existsTestCommand "$@" > /dev/null 2> /dev/null
   }
 
 
