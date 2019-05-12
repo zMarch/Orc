@@ -1159,6 +1159,9 @@ psgrep() {
     return 1
   fi
   # don't list this process running the grep
+  # TODO: make a more specific grep with pgrep.
+  # The simple grep searchs in all parts of the ps output.
+  # shellcheck disable=2009
   ps -weFH | grep "$1" | grep -v grep
 }
 
