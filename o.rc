@@ -1166,18 +1166,17 @@ psgrep() {
 }
 
 getescape() {
-ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read -r i; do
-if ls -di --color=never "/proc/$i/root/" | cut -d ' ' -f1 | grep -qe "^2"; then
-	echo "process $i seems to be outside the jail..."
-	fi
-done
-
+  ps --no-header aux | awk -F" " '{print $1" "$2}' | grep "^$(id -u)"i | awk '{print $2}' | tr ' ' '\n' | while read -r i; do
+    if stat -c '%i' "/proc/$i/root/" | grep -qe "^2"; then
+      echo "process $i seems to be outside the jail..."
+    fi
+  done
 }
 
 getjail() {
 TTT=0
 echo "Checking to see if we're in one giant simulation..."
-	if ls -di --color=never / | cut -d ' ' -f1 | grep -vqe "^2"; then
+	if stat -c '%i' '/' | grep -vqe "^2"; then
 	TTT=1
 	echo "We're in a chroot."
 	fi
