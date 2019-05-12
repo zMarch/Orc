@@ -1366,16 +1366,19 @@ getexploit () {
 }
 
 getenum() {
-echo "Doing some basic listing of the usual suspects..."
-printf "Kernel: "
-uname -rv
-printf "glibc: "
-readonly libcv="$(ldd "$(command -v id)" | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt)"
-$libcv
-printf "dbus: "
-dbus-daemon --version | grep --color=never Daemon
-printf "Init system is: "
-ps -p 1 | grep --color=never -v CMD| awk -F " " '{ print $4 }'
+  echo 'Doing some basic listing of the usual suspects...'
+  printf 'Kernel: '
+  uname -rv
+  printf 'glibc: '
+  readonly libcv="$(ldd "$(command -v id)" | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt)"
+  $libcv
+  printf 'dbus: '
+  dbus-daemon --version | grep --color=never Daemon
+  printf 'Init system is: '
+  # print the true command name of process 1.
+  # ps -p 1 is not supported by all systems, e.g. the busybox.
+  # So select the PID with the AWK tool
+  ps -e -o pid,comm | awk '$1=="1" {print $2}'
 }
 
 
@@ -1441,9 +1444,9 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]        stomp - alias for touch -r (needs arguments)
 [*]        tools - check for common tools
 [*]     dropsuid - drop tiny suid shell - dropsuid > [file]
-[*]      hangup  - terminate someones PTS by killing their SSH process.
+[*]       hangup - terminate someones PTS by killing their SSH process.
 [*]                Very loud, DO NOT USE.
-[*]              - hangup [PTS NUMBER]
+[*]                hangup [PTS NUMBER]
 "
 }
 
