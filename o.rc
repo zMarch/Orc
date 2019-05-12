@@ -1476,14 +1476,15 @@ unset HISTFILE
 HISTSIZE=0
 umask 002
 if orc_existsProg ulimit; then
-        echo "coredumps disabled by ulimit"
-	#disabling shellcheck here, we're doing our best
-        # shellcheck disable=SC2039
-	ulimit -c 0
+  echo 'coredumps disabled by ulimit'
+  # disabling shellcheck here, we have checked ulimit existence before.
+  # shellcheck disable=SC2039,SC2169
+  ulimit -c 0
 elif orc_existsProg limit; then
-        echo "coredumps disabled by limit"
-        limit coredumpsize 0
-else echo "no limit/ulimit - coredumps left enabled, careful"
+  echo 'coredumps disabled by limit'
+  limit coredumpsize 0
+else
+  echo 'no limit/ulimit - coredumps left enabled, careful'
 fi
 
 
