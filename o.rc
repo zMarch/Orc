@@ -739,7 +739,7 @@ orc_integerToIP4() {
 }
 
 
-orc_firstIp4integer() {
+orc_firstIP4integer() {
   # First IPv4 address in a LAN.
   # Argument: One address as integer, NOT dotted format
   #           Netmask as integer, NOT dotted format
@@ -763,9 +763,12 @@ orc_lastIP4integer() {
     echo 'Error: address and netmask must be given' >&2
     return 1
   fi
-  # ~1 = 31 bits 1 and last bit 0. All bits 1 outside the
-  # netmask is the broadcast address of the subnet.
-  echo $(( ($1 & $2) | (~1 & ~$2) ))
+  # 65535<<16|65534 = 31 bits 1 and last bit 0. Written with
+  # numbers valid in a 32-bit signed integer and 64-bit signed
+  # integer arithmetic.
+  # All bits 1 outside the netmask is the broadcast address
+  # of the subnet.
+  echo $(( ($1 & $2) | ((65535<<16|65534) & ~$2) ))
 }
 
 
@@ -806,12 +809,11 @@ orc_pingIP4localnet() {
   fi
   myaddr=$(orc_IP4toInteger "$1")
   mask=$(orc_IP4toInteger "$2")
-  value=$(orc_firstIp4integer "$myaddr" "$mask")
+  value=$(orc_firstIP4integer "$myaddr" "$mask")
   lastvalue=$(orc_lastIP4integer "$myaddr" "$mask")
-  while [ 1 ]; do
+  while true; do
     address=$(orc_integerToIP4 "$value")
-    if ping -c1 -n "$address" > /dev/null
-    then
+    if ping -c1 -n "$address" > /dev/null; then
       echo "$address is alive"
     fi
     if [ "$value" -eq "$lastvalue" ]; then
