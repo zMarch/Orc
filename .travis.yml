@@ -28,5 +28,7 @@ script:
   #
   # Run the defined shunit2 test scripts
   # 
-  - tests/start_shunit2.sh
+  - tests/start_shunit2.sh bash
+  - tests/start_shunit2.sh dash
+  - tests/start_shunit2.sh ksh
 

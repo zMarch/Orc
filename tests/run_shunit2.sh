@@ -10,7 +10,7 @@
 test_Gethelp () {
   output=$(gethelp)
   assertNotNull 'output is null' "$output"
-  assertNotNull 'Orc not found' "$(echo $output|grep 'Orc')"
+  assertNotNull 'Orc not found' "$(echo "$output"|grep 'Orc')"
 }
 
 
