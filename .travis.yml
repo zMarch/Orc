@@ -1,6 +1,14 @@
-language: shell
+language: generic
 script:
-  # Optimize portability: ShellCheck for bash, POSIX sh and ksh interpreter.
-  - bash -c 'shopt -s globstar; shellcheck -s bash **/*.rc'
-  - bash -c 'shopt -s globstar; shellcheck -s sh **/*.rc'
-  - bash -c 'shopt -s globstar; shellcheck -s ksh **/*.rc'
+  # o.rc
+  #   Static code check with shellcheck tool
+  #   Checks for bash, POSIX shell, dash and ksh
+  - shellcheck -s bash o.rc
+  - shellcheck -s sh o.rc
+  - shellcheck -s dash o.rc
+  - shellcheck -s ksh o.rc
+  # Script build tools in resources
+  #   Static code check with the shellcheck tool
+  #   Checks for the interpreter given in the #! line
+  - shellcheck resources/*.sh
+
