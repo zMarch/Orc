@@ -1,4 +1,12 @@
 language: generic
+
+addons:
+  apt:
+    packages:
+      - dash
+      - bash
+      - mksh
+
 script:
   #
   # Static code check with shellcheck tool
@@ -14,7 +22,11 @@ script:
   # Checks the helper scripts in tests
   - shellcheck tests/*.sh
   #
-  # Run the defined test scripts
+  # Run the defined shell test scripts
   #
   - tests/scripts_included.sh
+  #
+  # Run the defined shunit2 test scripts
+  # 
+  - tests/start_shunit2.sh
 
