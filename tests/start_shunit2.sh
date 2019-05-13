@@ -30,8 +30,8 @@ fi
 export SHUNIT_COLOR
 SHUNIT_COLOR='always'
 
-# use absoulte paths because o.rc changes the CWD
-testRunner=$(realpath tests/run_shunit2.sh)
+# The script runs the tests
+testRunner='./tests/run_shunit2.sh'
 
 # Run the tests
 case $1 in
