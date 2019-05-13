@@ -1,14 +1,20 @@
 language: generic
 script:
-  # o.rc
-  #   Static code check with shellcheck tool
-  #   Checks for bash, POSIX shell, dash and ksh
+  #
+  # Static code check with shellcheck tool
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #
+  # Checks o.rc for bash, POSIX shell, dash and ksh
   - shellcheck -s bash o.rc
   - shellcheck -s sh o.rc
   - shellcheck -s dash o.rc
   - shellcheck -s ksh o.rc
-  # Script build tools in resources
-  #   Static code check with the shellcheck tool
-  #   Checks for the interpreter given in the #! line
+  # Checks the helper scripts in resources
   - shellcheck resources/*.sh
+  # Checks the helper scripts in tests
+  - shellcheck tests/*.sh
+  #
+  # Run the defined test scripts
+  #
+  - tests/scripts_included.sh
 
