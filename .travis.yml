@@ -1,22 +1,19 @@
 language: generic
 
-os:
-  - linux
-
 # All available Linux distributions
 #   Ubuntu Xenial 16.04
-#   Ubuntu Trusty 14.04 default
+#   Ubuntu Trusty 14.04
 #   Ubuntu Precise 12.04
 dist:
-  - xenial
-  - trusty
   - precise
+  - trusty
+  - xenial
 
 addons:
   apt:
     packages:
-      - dash
       - bash
+      - dash
       - mksh
 
 script:

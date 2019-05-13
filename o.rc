@@ -413,7 +413,7 @@ fi
 if [ -r "$ENV" ]; then
   backup=$(cat "$ENV")
   # Convert to absolute file name for later use.
-  ENV=$(realpath "$ENV")
+  ENV=$(readlink -e "$ENV")
 fi
 if [ -z "$backup" ]; then
   echo 'Warning: backup variable with script file is not available' >&2

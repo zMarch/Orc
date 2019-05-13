@@ -31,7 +31,7 @@ export SHUNIT_COLOR
 SHUNIT_COLOR='always'
 
 # The script runs the tests
-testRunner=$(readlink -f ./tests/run_shunit2.sh)
+testRunner=$(readlink -e ./tests/run_shunit2.sh)
 
 # Run the tests
 case $1 in
