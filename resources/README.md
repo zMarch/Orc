@@ -29,7 +29,7 @@ with the code developed here.
   The program must be compiled for the desired target system before
   memexec can start the binary file.
     
-## encoder
+### encoder
 
 The scripts are stored gziped and base64 encoded in the o.rc file.
 Also the comments inside the script files are not stored in the o.rc.
