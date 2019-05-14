@@ -34,11 +34,14 @@ SHUNIT_COLOR='always'
 testRunner=$(readlink -e ./tests/run_shunit2.sh)
 
 # Run the tests
-case $1 in
-  bash)  bash -i "$testRunner" ;;
-  dash)  dash "$testRunner" ;;
-  ksh)   ksh  -i "$testRunner" ;;
-  *)     echo 'ERROR: invalid argument, must be a shell name' >&2
-	 return 1 ;;
-esac
+for runner in $(readlink -e ./tests/run_shunit2_*.sh); do
+  echo ">>> start script '$runner'"
+  case $1 in
+    bash)  bash -i "$runner" ;;
+    dash)  dash "$runner" ;;
+    ksh)   ksh  -i "$runner" ;;
+    *)     echo 'ERROR: invalid argument, must be a shell name' >&2
+           return 1 ;;
+  esac
+done
 

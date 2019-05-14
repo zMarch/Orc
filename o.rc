@@ -47,6 +47,7 @@ orc_noop() {
 # works in bash, dash and ksh but is not POSIX conform.
 # So try to figure out which command works and define an
 # alias to the command.
+# A variable instead an alias does not work with ksh.
 if hash ' not a program ' > /dev/null 2> /dev/null; then
   alias orc_existsTestCommand='type'
 else
@@ -1484,7 +1485,7 @@ elif orc_existsProg limit; then
   echo 'coredumps disabled by limit'
   limit coredumpsize 0
 else
-  echo 'no limit/ulimit - coredumps left enabled, careful'
+  echo 'Error: no limit/ulimit - coredumps left enabled, careful' >&2
 fi
 
 
