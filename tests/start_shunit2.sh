@@ -9,7 +9,7 @@
 #
 
 if [ $# -ne 1 ]; then
-  echo 'ERROR: script needs shell (bash, dash, ksh) as argument' >&2
+  echo 'ERROR: script needs shell (bash, dash, ksh, ash) as argument' >&2
   return 1;
 fi
 
@@ -30,9 +30,6 @@ fi
 export SHUNIT_COLOR
 SHUNIT_COLOR='always'
 
-# The script runs the tests
-testRunner=$(readlink -e ./tests/run_shunit2.sh)
-
 # Run the tests
 for runner in $(readlink -e ./tests/run_shunit2_*.sh); do
   echo ">>> start script '$runner'"
@@ -40,6 +37,7 @@ for runner in $(readlink -e ./tests/run_shunit2_*.sh); do
     bash)  bash -i "$runner" ;;
     dash)  dash "$runner" ;;
     ksh)   ksh  -i "$runner" ;;
+    ash)   busybox ash "$runner" ;;
     *)     echo 'ERROR: invalid argument, must be a shell name' >&2
            return 1 ;;
   esac

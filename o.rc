@@ -414,7 +414,7 @@ fi
 if [ -r "$ENV" ]; then
   backup=$(cat "$ENV")
   # Convert to absolute file name for later use.
-  ENV=$(readlink -e "$ENV")
+  ENV=$(readlink -f "$ENV")
 fi
 if [ -z "$backup" ]; then
   echo 'Warning: backup variable with script file is not available' >&2
@@ -1498,8 +1498,7 @@ echo "IP address on the network: "
 	else
 	ip addr show | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
 	fi
-printf "We are uid " 
-id -uz;printf " - "; printf "(";whoami | tr -d '\n';echo ")"
+printf "We are %s - (%s)\n" "$(id -u)" "$(id -nu)"
 printf "Machine has been "
 uptime -p
 	if [ -f /etc/machine-id ]; then
