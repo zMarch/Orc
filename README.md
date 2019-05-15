@@ -85,9 +85,17 @@ HOWEVER. An overview:
 
 - getescape attempts to find a way to escape a chroot by traversing a poorly configured /proc/. ([Wiki](https://github.com/zMarch/Orc/wiki/getescape))
 
-## Compatibility Status
+## Build Status
+
+Tests of the Orc script file are executed automatical with the [Travis CI](https://travis-ci.org/) service.
 
 [ShellCheck](https://www.shellcheck.net/) is used to ensure wide compatibility of the Orc script.
-The Bourne shell dialects: bash, sh and ksh are checked. For details see the Travis CI job log.
+The Bourne shell dialects: bash, dash, sh and ksh are checked.
+
+Scripts in the tests sub-directory automatical tests Orc functions. Current the tests are in construction.
+The tests will be widened over the time.
+
+For details see the Travis CI job log.
 
 [![Build Status](https://api.travis-ci.org/zMarch/Orc.svg?branch=master)](https://travis-ci.org/zMarch/Orc)
+

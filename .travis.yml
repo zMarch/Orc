@@ -1,14 +1,46 @@
-language: generic
+language: minimal
+
+# All available Linux distributions with language minimal:
+#   Ubuntu Xenial 16.04
+#   Ubuntu Trusty 14.04
+# Ubuntu Precise 12.04 is not supported.
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+    - os: linux
+      dist: xenial
+
+addons:
+  apt:
+    packages:
+      - bash
+      - dash
+      - mksh
+      - shellcheck
+
 script:
-  # o.rc
-  #   Static code check with shellcheck tool
-  #   Checks for bash, POSIX shell, dash and ksh
+  #
+  # Static code check with shellcheck tool
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #
+  # Checks o.rc for bash, POSIX shell, dash and ksh
   - shellcheck -s bash o.rc
   - shellcheck -s sh o.rc
   - shellcheck -s dash o.rc
   - shellcheck -s ksh o.rc
-  # Script build tools in resources
-  #   Static code check with the shellcheck tool
-  #   Checks for the interpreter given in the #! line
+  # Checks the helper scripts in resources
   - shellcheck resources/*.sh
+  # Checks the helper scripts in tests
+  - shellcheck tests/*.sh
+  #
+  # Run the defined shell test scripts
+  #
+  - tests/scripts_included.sh
+  #
+  # Run the defined shunit2 test scripts
+  # 
+  - tests/start_shunit2.sh bash
+  - tests/start_shunit2.sh dash
+  - tests/start_shunit2.sh ksh
 
