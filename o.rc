@@ -873,11 +873,9 @@ getsfiles () {
     if orc_existsProg find; then
       # List setuid flagged files
       echo 'setuid flagged files list; attribute user name'
-      find / -perm /4000 2> /dev/null |
-      while read -r name; do
-        # long option names not supported on all systems
-        stat -c '%a   %A      %U      %N' -- "$name"
-      done
+      find / -perm /4000 \
+           -exec stat -c '%a   %A      %U      %N' -- \{\} \; \
+           2> /dev/null
       echo ''
     else
       echo 'Error: missing find, need to implement other search' >&2
