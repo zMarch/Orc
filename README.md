@@ -37,6 +37,9 @@ HOWEVER. An overview:
 
 - getrel prints the OS name from the release file. ([Wiki](https://github.com/zMarch/Orc/wiki/getrel))
 
+
+- getsfiles lists setuid flagged files and setcap files. ([Wiki](https://github.com/zMarch/Orc/wiki/getsfiles))
+
 - getip uses HTTP and DNS to get your external IP. It aims to use curl and dig, but will fall back to wget and host if it needs to. It grabs these from Akami and Google respectively to try and avoid using smaller sites that might flag in a SOC's logs or alerts. ([Wiki](https://github.com/zMarch/Orc/wiki/getip))
 
 - getjail does a check to see if we're in a chroot, and then does some very basic checks for hypervisors/virtualisation. If there are any better checks, let me know. ([Wiki](https://github.com/zMarch/Orc/wiki/getjail))
