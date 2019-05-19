@@ -855,6 +855,43 @@ command -V aa-status >/dev/null 2>/dev/null
 }
 
 
+# getsfiles is called without argument in the function, that is ok.
+# shellcheck disable=SC2119,SC2120
+getsfiles () {
+  # Lists files with setuid and setcap.
+  # Optional argument background
+  # runs the search in the background and write the filelist
+  # to $HOME/sfiles
+  if [ $# -eq 1 ] && [ "$1" = 'background' ]; then
+    echo "run in $1, find results in $HOME/sfiles"
+    getsfiles > "$HOME/sfiles" &
+  else
+    if [ $# -ne 0 ]; then
+      echo 'Error: call must getsfile [background]' >&2
+      return 1
+    fi
+    if orc_existsProg find; then
+      # List setuid flagged files
+      echo 'setuid flagged files list; attribute user name'
+      find / -perm /4000 2> /dev/null |
+      while read -r name; do
+        # long option names not supported on all systems
+        stat -c '%a   %A      %U      %N' -- "$name"
+      done
+      echo ''
+    else
+      echo 'Error: missing find, need to implement other search' >&2
+    fi
+    if orc_existsProg getcap; then
+      echo 'files with capabilities; name = caps'
+      getcap -r / 2>/dev/null
+    else
+      echo 'Error: missing getcap' >&2
+    fi
+  fi
+}
+
+
 getinfo() {
   echo "Gathering useful command output."
   # Collect output files in $OUTP
@@ -1422,6 +1459,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]        getip - get external IP from akamai and google (HTTP and DNS)
 [*]      getjail - check if we're in a chroot/VM
 [*]       getsec - check if the big three security MAC programs are around
+[*]    getsfiles - list setuid flagged files and setcap files
 [*]       gettmp - list typical directories for tmp files
 [*]     getusers - pull all users with a shell
 [*]       getpty - pop a pty with script
