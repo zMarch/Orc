@@ -22,15 +22,32 @@ if [ ! -f ./o.rc ]; then
 fi
 
 
-test_gethelp () {
+test_gethelp() {
   # Test the gethelp function
-  output=$(gethelp)
+  output=$(gethelp 2> /dev/null)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
-  assertContains 'Orc not found' "$output" 'Orc'
-  assertTrue 'Less than 5 lines' "[ $(echo "$output"|wc -l) -ge 5 ]"
+  assertContains 'in output' "$output" 'Orc'
+  assertTrue 'less than 5 lines' "[ $(echo "$output"|wc -l) -ge 5 ]"
   error=$(gethelp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
+}
+
+
+test_getsfiles() {
+  # Tets the getsfiles function
+  error=$(getsfiles background 2>&1 > /dev/null)
+  assertNull 'error message in background mode' "$error"
+  output=$(getsfiles 2> /dev/null)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertContains 'in output' "$output" 'root'
+  assertTrue 'less than 5 lines' "[ $(echo "$output"|wc -l) -ge 5 ]"
+  error=$(getsfiles 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  assertTrue 'missing sfiles' "[ -f sfiles ]"
+  assertTrue 'less than 5 lines in sfiles' "[ $(wc -l < sfiles) -ge 5 ]"
+  rm sfiles
 }
 
 
