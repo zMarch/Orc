@@ -855,6 +855,41 @@ command -V aa-status >/dev/null 2>/dev/null
 }
 
 
+# getsfiles is called without argument in the function, that is ok.
+# shellcheck disable=SC2119,SC2120
+getsfiles () {
+  # Lists files with setuid and setcap.
+  # Optional argument background
+  # runs the search in the background and write the filelist
+  # to $HOME/sfiles
+  if [ $# -eq 1 ] && [ "$1" = 'background' ]; then
+    echo "run in $1, find results in $HOME/sfiles"
+    getsfiles > "$HOME/sfiles" &
+  else
+    if [ $# -ne 0 ]; then
+      echo 'Error: call must getsfile [background]' >&2
+      return 1
+    fi
+    if orc_existsProg find; then
+      # List setuid flagged files
+      echo 'setuid flagged files list; attribute user name'
+      find / -perm /4000 \
+           -exec stat -c '%a   %A      %U      %N' -- \{\} \; \
+           2> /dev/null
+      echo ''
+    else
+      echo 'Error: missing find, need to implement other search' >&2
+    fi
+    if orc_existsProg getcap; then
+      echo 'files with capabilities; name = caps'
+      getcap -r / 2>/dev/null
+    else
+      echo 'Error: missing getcap' >&2
+    fi
+  fi
+}
+
+
 getinfo() {
   echo "Gathering useful command output."
   # Collect output files in $OUTP
@@ -1414,42 +1449,43 @@ gettmp () {
 gethelp() {
 echo "
 A probably non-comprehensive list of functionality in Orc v$OVERSION.
-[*]      getenum - get kernel, glibc, and dbus versions
-[*]      getinfo - create a tar.xz of useful command output
-[*]       getrel - attempt to get the OS release file.
+[*]     dropsuid - drop tiny suid shell - dropsuid > [file]
+[*]        fpssh - pull ssh remote host fingerprints - fpssh [host]
+[*]      getdbus - list all dbus services
 [*]    getdocker - check docker socket status, and list images.
-[*]      getluks - attempt to detect disk crypto with lsblk or dmesg
-[*]        getip - get external IP from akamai and google (HTTP and DNS)
-[*]      getjail - check if we're in a chroot/VM
-[*]       getsec - check if the big three security MAC programs are around
-[*]       gettmp - list typical directories for tmp files
-[*]     getusers - pull all users with a shell
-[*]       getpty - pop a pty with script
-[*]      getidle - list all ptys and their idle times accurately.
-[*]       getnet - attempt to enumerate hosts on the local network with ping
-[*]   getsuspect - pull my suspect tool from github
-[*]      getspec - grab some hardware information
-[*] getuservices - list all running services with non-user accounts in passwd
+[*]      getenum - get kernel, glibc, and dbus versions
 [*]    getescape - attempt to escape chroot via bad privs
 [*]                on the /proc/ filesystem
-[*]      getdbus - list all dbus services
 [*]   getexploit - download and run linux-exploit-suggester
-[*]      memexec - execute a binary in-memory from a webserver
-[*]              - memexec [full URI] [program arguments]
-[*]     portscan - run a portscan against common ports - portscan [host]
-[*]     prochide - run a program with $0 changed to the longest entry in ps
-[*]              - prochide [program + args]
-[*]          srm - alias for secure shredding of files
-[*]          qsu - sudo without a tty - qsu [password] [normal arguments]
-[*]         qssh - ssh without a tty - qssh [password] [normal arguments]
-[*]        wiper - remove entries from wtmp - wiper [string to grep out]
-[*]        fpssh - pull ssh remote host fingerprints - fpssh [host]
-[*]        stomp - alias for touch -r (needs arguments)
-[*]        tools - check for common tools
-[*]     dropsuid - drop tiny suid shell - dropsuid > [file]
+[*]      getidle - list all ptys and their idle times accurately.
+[*]      getinfo - create a tar.xz of useful command output
+[*]        getip - get external IP from akamai and google (HTTP and DNS)
+[*]      getjail - check if we're in a chroot/VM
+[*]      getluks - attempt to detect disk crypto with lsblk or dmesg
+[*]       getnet - attempt to enumerate hosts on the local network with ping
+[*]       getpty - pop a pty with script
+[*]       getrel - attempt to get the OS release file.
+[*]       getsec - check if the big three security MAC programs are around
+[*]    getsfiles - list setuid flagged files and setcap files
+[*]      getspec - grab some hardware information
+[*]   getsuspect - pull my suspect tool from github
+[*]       gettmp - list typical directories for tmp files
+[*]     getusers - pull all users with a shell
+[*] getuservices - list all running services with non-user accounts in passwd
 [*]       hangup - terminate someones PTS by killing their SSH process.
 [*]                Very loud, DO NOT USE.
 [*]                hangup [PTS NUMBER]
+[*]      memexec - execute a binary in-memory from a webserver
+[*]                memexec [full URI] [program arguments]
+[*]     portscan - run a portscan against common ports - portscan [host]
+[*]     prochide - run a program with $0 changed to the longest entry in ps
+[*]                prochide [program + args]
+[*]         qssh - ssh without a tty - qssh [password] [normal arguments]
+[*]          qsu - sudo without a tty - qsu [password] [normal arguments]
+[*]          srm - alias for secure shredding of files
+[*]        stomp - alias for touch -r (needs arguments)
+[*]        tools - check for common tools
+[*]        wiper - remove entries from wtmp - wiper [string to grep out]
 "
 }
 
