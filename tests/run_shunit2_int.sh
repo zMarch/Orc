@@ -27,8 +27,36 @@ test_orc_noop () {
   output=$(orc_noop)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
   error=$(orc_noop 2>&1 > /dev/null)
   assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "$error"; fi
+}
+
+
+test_orc_existsProg () {
+  # Test the orc_existsProg function
+  output=$(orc_existsProg orc_noop 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  output=$(orc_existsProg ' this is not a program ' 2>&1)
+  assertNotEquals 'returned not false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+}
+
+
+test_orc_listArp () {
+  # Test the orc_listArp function
+  output=$(orc_listArp)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  # One address = one word per line
+  assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
+  error=$(orc_listArp 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "$error"; fi
 }
 
 
