@@ -1465,6 +1465,10 @@ tools() {
   # Check for common tools.
   # Arguments: none
   # Prints report to stdout
+  if ! orc_existsProg type; then
+    echo 'Error: need type, other check methods not yet implemented' >&2
+  fi
+  # shellcheck disable=SC2039
   type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump
   return 0
   }
