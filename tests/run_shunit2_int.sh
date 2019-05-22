@@ -34,6 +34,33 @@ test_orc_noop () {
 }
 
 
+test_orc_colorNever () {
+  # Test the orc_colorNever flag for the grep tool
+  output=$(echo 'test' | grep $orc_colorNever 'no' 2>&1)
+  assertNotEquals 'returned not false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  output=$(echo 'test' | grep $orc_colorNever 'test' 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertEquals 'returned not grep' 'test' "$output"
+  output=$(echo 'test' | grep $orc_colorNeveri -q 'no' 2>&1)
+  assertNotEquals 'returned not false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  output=$(echo 'test' | grep $orc_colorNever -q 'test' 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+  output=$(echo 'test' | grep -q 'no' 2>&1)
+  assertNotEquals 'returned not false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  output=$(echo 'test' | grep -q 'test' 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+}
+
+
 test_orc_existsProg () {
   # Test the orc_existsProg function
   output=$(orc_existsProg orc_noop 2>&1)
@@ -55,6 +82,33 @@ test_orc_listArp () {
   # One address = one word per line
   assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
   error=$(orc_listArp 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "$error"; fi
+}
+
+
+test_orc_listBroadcastAddress () {
+  # Test the orc_listBroadcastAddress function
+  output=$(orc_listBroadcastAddress)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  # One address = one word per line
+  assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
+  error=$(orc_listBroadcastAddress 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "$error"; fi
+}
+
+
+
+test_orc_inetAddressAndMask () {
+  # Test the orc_inetAddressAndMask function
+  output=$(orc_inetAddressAndMask)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  # One address plus mask per line = two words per line
+  assertEquals 'lines and words' "$(( $(echo "$output"|wc -l) *2))" "$(echo "$output"|wc -w)"
+  error=$(orc_inetAddressAndMask 2>&1 > /dev/null)
   assertNull 'error message' "$error"
   if [ -n "$error" ]; then echo "$error"; fi
 }
