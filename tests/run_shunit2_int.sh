@@ -36,18 +36,27 @@ test_orc_noop () {
 
 test_orc_colorNever () {
   # Test the orc_colorNever flag for the grep tool
+  # The orc_colorNever variable is defined in the o.rc.
+  # So the shellcheck 2154 must be disabled.
+  # The varaible must not used with quotes because the
+  # empty string must not used as argument.
+  # So the shellcheck 2086 must be disabled.
+  # shellcheck disable=SC2154,SC2086
   output=$(echo 'test' | grep $orc_colorNever 'no' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
   if [ -n "$output" ]; then echo "$output"; fi
+  # shellcheck disable=SC2154,SC2086
   output=$(echo 'test' | grep $orc_colorNever 'test' 2>&1)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
   assertEquals 'returned not grep' 'test' "$output"
+  # shellcheck disable=SC2154,SC2086
   output=$(echo 'test' | grep $orc_colorNeveri -q 'no' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
   if [ -n "$output" ]; then echo "$output"; fi
+  # shellcheck disable=SC2154,SC2086
   output=$(echo 'test' | grep $orc_colorNever -q 'test' 2>&1)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
