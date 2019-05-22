@@ -123,6 +123,43 @@ test_orc_inetAddressAndMask () {
 }
 
 
+test_orc_exportProxySettings () {
+  # Test the orc_exportProxySettings function
+  output=$(orc_exportProxySettings 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  http_proxy='http-test'
+  https_proxy='https-test'
+  output=$(orc_exportProxySettings 2>&1)
+  orc_exportProxySettings
+  assertEquals 'returned false' 0 $?
+  assertEquals 'http_proxy 1' 'http-test' "$(sh -c 'echo $http_proxy')"
+  assertEquals 'http_proxy 2' 'http-test' "$(sh -c 'echo $HTTP_PROXY')"
+  assertEquals 'https_proxy 1' 'https-test' "$(sh -c 'echo $https_proxy')"
+  assertEquals 'https_proxy 2' 'https-test' "$(sh -c 'echo $HTTPS_PROXY')"
+  http_proxy=''
+  HTTP_PROXY='http2-test'
+  https_proxy=''
+  HTTPS_PROXY='https2-test'
+  orc_exportProxySettings
+  assertEquals 'returned false' 0 $?
+  assertEquals 'http_proxy 3' 'http2-test' "$(sh -c 'echo $http_proxy')"
+  assertEquals 'http_proxy 4' 'http2-test' "$(sh -c 'echo $HTTP_PROXY')"
+  assertEquals 'https_proxy 3' 'https2-test' "$(sh -c 'echo $https_proxy')"
+  assertEquals 'https_proxy 4' 'https2-test' "$(sh -c 'echo $HTTPS_PROXY')"
+  assertEquals 'http_proxy 5' 'http2-test' "$http_proxy"
+  assertEquals 'http_proxy 6' 'http2-test' "$HTTP_PROXY"
+  assertEquals 'https_proxy 5' 'https2-test' "$https_proxy"
+  assertEquals 'https_proxy 6' 'https2-test' "$HTTPS_PROXY"
+  # clear http proxy settings for follwing tests
+  http_proxy=''
+  HTTP_PROXY=''
+  https_proxy=''
+  HTTPS_PROXY=''
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
