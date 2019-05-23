@@ -282,10 +282,6 @@ sys.exit(0)
     # Do not use option -N here because not all nc implementations support
     # this (e.g. busybox).
     echo '' | nc -w1 "$1" "$2" 2>/dev/null
-  elif orc_existsProg bash; then
-    # Open a connection with the bash.
-    # This is a bash extension. POSIX shell will not support this.
-    bash -c "echo '' > /dev/tcp/$1/$2" 2>/dev/null
   else
     echo 'Error: no tool to open TCP connection found' >&2
     return 1
@@ -307,7 +303,7 @@ orc_listtmp() {
     echo "$TMPDIR";
     echo "$HOME";
     echo "$NHOME";
-    echo "/root";
+    echo '/root';
   } |
   # filter: filesystem tmpfs and each directory only once
   awk '(NF==1 || $1=="tmpfs") && hit[$NF]==0 {hit[$NF]=1; print $NF}' |
@@ -334,7 +330,7 @@ orc_makeHome() {
     # Also possible to reuse an existing directory
     if [ -d "$base/.q" ]; then
       # try to create an executable
-      echo "test" > "$base/.q/.t"
+      echo 'test' > "$base/.q/.t"
       chmod +x "$base/.q/.t"
       if [ ! -x "$base/.q/.t" ]; then
 	# can not create a executable
@@ -422,7 +418,7 @@ trap 'rm -rf $HOME' EXIT TERM INT
 
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
-backup=""
+backup=''
 if [ -n "$BASH" ]; then
   # Script runs in bash. Here BASH_SOURCE exists.
   # shellcheck disable=SC2169,SC2039
@@ -439,7 +435,7 @@ fi
 if [ -z "$backup" ]; then
   echo 'Warning: backup variable with script file is not available' >&2
 fi
-NHOME=""
+NHOME=''
 
 
 orc_createEchoFile () {
@@ -569,7 +565,7 @@ orc_isMinimalOsVersion() {
   #         2 if OS name is equal but version is less.
   orc_local first rest
   if [ $# -ne 3 ]; then
-    echo "Error: missing arguments: name, version1, version2" >&2
+    echo 'Error: missing arguments: name, version1, version2' >&2
     return 9
   fi
   # use the short options -s and -n because not all uname tools
@@ -721,7 +717,7 @@ orc_IP4toInteger() {
   fi
   # get first number by removing the last 3 numbers
   value=${1%.*.*.*}
-  if [ "$value" = "" ]; then
+  if [ "$value" = '' ]; then
     echo 'Error: no IPv4 address given' >&2
     return 1
   fi
