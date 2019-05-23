@@ -203,6 +203,17 @@ test_orc_listtmp () {
 }
 
 
+test_orc_makeHome () {
+  # Test the orc_makeHome function
+  output=$(orc_makeHome 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  assertNotNull 'HOME' "$HOME"
+  assertTrue 'not directory' "[ -d $HOME ]"
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
