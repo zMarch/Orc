@@ -195,7 +195,7 @@ test_orc_listtmp () {
   assertTrue 'less than 3 lines' "[ $(echo "$output"|wc -l) -ge 3 ]"
   echo "$output" |
   while read -r t; do
-    assertTrue 'not directory' "[ -d "$t" ]"
+    assertTrue 'not directory' "[ -d $t ]"
   done
   error=$(orc_listtmp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
