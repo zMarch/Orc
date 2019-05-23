@@ -109,7 +109,6 @@ test_orc_listBroadcastAddress () {
 }
 
 
-
 test_orc_inetAddressAndMask () {
   # Test the orc_inetAddressAndMask function
   output=$(orc_inetAddressAndMask)
@@ -157,6 +156,50 @@ test_orc_exportProxySettings () {
   HTTP_PROXY=''
   https_proxy=''
   HTTPS_PROXY=''
+}
+
+
+test_orc_loadURL () {
+  # Test the orc_loadURL function
+  output=$(orc_loadURL https://raw.githubusercontent.com/zMarch/Orc/master/resources/echo_arguments.sh)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'less than 10 lines' "[ $(echo "$output"|wc -l) -ge 10 ]"
+  assertTrue 'less than 50 words' "[ $(echo "$output"|wc -w) -ge 50 ]"
+  assertContains 'in download' "$output" '#!'
+  assertContains 'in download' "$output" 'echo'
+  error=$(orc_loadURL https://raw.githubusercontent.com/zMarch/Orc/master/resources/echo_arguments.sh 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "$error"; fi
+}
+
+
+test_orc_tryTcpConnection () {
+  # Test the orc_tryTcpConnection function
+  output=$(orc_tryTcpConnection 'raw.githubusercontent.com' 80 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+  output=$(orc_tryTcpConnection 'raw.githubusercontent.com' 43 2>&1)
+  assertNotEquals 'returned not false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "$output"; fi
+}
+
+
+test_orc_listtmp () {
+  # Test the orc_listtmp function
+  output=$(orc_listtmp)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'less than 3 lines' "[ $(echo "$output"|wc -l) -ge 3 ]"
+  echo "$output" |
+  while read -r t; do
+    assertTrue 'not directory' "[ -d "$t" ]"
+  done
+  error=$(orc_listtmp 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "$error"; fi
 }
 
 
