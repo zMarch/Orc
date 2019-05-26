@@ -1036,9 +1036,8 @@ srm() {
     return 1
   fi
   if orc_existsProg shred; then
-    shred -vzfun 2 "$@"
+    shred -zfun 2 "$@"
   else
-    echo 'Warning: no file overwrite, only delete' >&2
     # TODO: implement overwrite of file content and file name
     # "--force" is not used because the long format is not accepted
     # by all shells, e.g. busybox shell.
@@ -1462,7 +1461,18 @@ gettmp () {
 }
 
 
+sourceurl () {
+  # Source a downloaded script.
+  # Argument: The URL to download, https is supported.
+  # Global: http(s)_proxy variables will be used.
+  if [ $# -ne 1 ]; then
+    echo 'Error: argument must be one URL to load' >&2
+    return 1
+  fi
+  eval "$(orc_loadURL "$1")"
+}
 
+ 
 dropsuid() {
   # drops tiny suid shell
   # usage: dropsuid > [file]
@@ -1526,6 +1536,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]                prochide [program + args]
 [*]         qssh - ssh without a tty - qssh [password] [normal arguments]
 [*]          qsu - sudo without a tty - qsu [password] [normal arguments]
+[*]    sourceurl - source a downloaded file - sourceurl URL
 [*]          srm - alias for secure shredding of files
 [*]        stomp - alias for touch -r (needs arguments)
 [*]        tools - check for common tools

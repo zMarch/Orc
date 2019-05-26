@@ -27,10 +27,10 @@ test_orc_noop () {
   output=$(orc_noop)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   error=$(orc_noop 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -45,7 +45,7 @@ test_orc_colorNever () {
   output=$(echo 'test' | grep $orc_colorNever 'no' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   # shellcheck disable=SC2154,SC2086
   output=$(echo 'test' | grep $orc_colorNever 'test' 2>&1)
   assertEquals 'returned false' 0 $?
@@ -55,7 +55,7 @@ test_orc_colorNever () {
   output=$(echo 'test' | grep $orc_colorNeveri -q 'no' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   # shellcheck disable=SC2154,SC2086
   output=$(echo 'test' | grep $orc_colorNever -q 'test' 2>&1)
   assertEquals 'returned false' 0 $?
@@ -63,7 +63,7 @@ test_orc_colorNever () {
   output=$(echo 'test' | grep -q 'no' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   output=$(echo 'test' | grep -q 'test' 2>&1)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
@@ -75,11 +75,11 @@ test_orc_existsProg () {
   output=$(orc_existsProg orc_noop 2>&1)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   output=$(orc_existsProg ' this is not a program ' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
 }
 
 
@@ -92,7 +92,7 @@ test_orc_listArp () {
   assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
   error=$(orc_listArp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -105,7 +105,7 @@ test_orc_listBroadcastAddress () {
   assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
   error=$(orc_listBroadcastAddress 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -118,7 +118,7 @@ test_orc_inetAddressAndMask () {
   assertEquals 'lines and words' "$(( $(echo "$output"|wc -l) *2))" "$(echo "$output"|wc -w)"
   error=$(orc_inetAddressAndMask 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -127,7 +127,7 @@ test_orc_exportProxySettings () {
   output=$(orc_exportProxySettings 2>&1)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   http_proxy='http-test'
   https_proxy='https-test'
   output=$(orc_exportProxySettings 2>&1)
@@ -170,7 +170,7 @@ test_orc_loadURL () {
   assertContains 'in download' "$output" 'echo'
   error=$(orc_loadURL https://raw.githubusercontent.com/zMarch/Orc/master/resources/echo_arguments.sh 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -179,11 +179,11 @@ test_orc_tryTcpConnection () {
   output=$(orc_tryTcpConnection 'raw.githubusercontent.com' 80 2>&1)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   output=$(orc_tryTcpConnection 'raw.githubusercontent.com' 43 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
 }
 
 
@@ -199,7 +199,7 @@ test_orc_listtmp () {
   done
   error=$(orc_listtmp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -208,9 +208,27 @@ test_orc_makeHome () {
   output=$(orc_makeHome 2>&1)
   assertEquals 'returned false' 0 $?
   assertNull 'output is not null' "$output"
-  if [ -n "$output" ]; then echo "$output"; fi
+  if [ -n "$output" ]; then echo "--> $output"; fi
   assertNotNull 'HOME' "$HOME"
   assertTrue 'not directory' "[ -d $HOME ]"
+}
+
+
+test_orc_createEchoFile () {
+  # Test the orc_createEchoFile function
+  output=$(orc_createEchoFile argument_A argument_BB 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  orc_createEchoFile argument_A argument_BB
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'ORC_ECHO_FILE' "$ORC_ECHO_FILE"
+  assertTrue 'not file' "[ -f $ORC_ECHO_FILE ]"
+  output=$("$ORC_ECHO_FILE")
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertContains 'in return' "$output" 'argument_A'
+  assertContains 'in return' "$output" 'argument_BB'
 }
 
 
