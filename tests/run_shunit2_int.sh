@@ -235,7 +235,7 @@ test_orc_createEchoFile () {
 test_orc_log2outp () {
   # Test the orc_log2outp function
   OUTP="$HOME"
-  cd "$HOME"
+  assertNotNull 'outp' "$OUTP"
   output=$(orc_log2outp testA ' this is not a program name ' 2>&1)
   assertNotEquals 'returned not false' 0 $?
   assertNull 'output is not null' "$output"
