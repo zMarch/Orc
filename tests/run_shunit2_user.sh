@@ -264,6 +264,10 @@ test_sourceurl() {
   assertEquals 'returned false' 0 $?
   assertNull 'output not null' "$output"
   if [ -n "$output" ]; then echo "--> $output"; fi
+  # The call before loads the script only in a subshell. Now load the script in the
+  # current shell.
+  sourceurl https://raw.githubusercontent.com/zMarch/Orc/master/resources/echo_function.sh
+  assertEquals 'returned false' 0 $?
   error=$(echo_function 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"

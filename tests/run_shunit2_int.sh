@@ -232,6 +232,37 @@ test_orc_createEchoFile () {
 }
 
 
+test_orc_log2outp () {
+  # Test the orc_log2outp function
+  OUTP="$HOME"
+  assertNotNull 'outp' "$OUTP"
+  output=$(orc_log2outp testA ' this is not a program name ' 2>&1)
+  assertNotEquals 'returned not false' 0 $?
+  assertNull 'output is not null' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  assertTrue 'output file' "[ -f 'testA.txt' ]"
+  assertTrue 'error file' "[ -f 'testA.err' ]"
+  output=$(cat 'testA.txt')
+  error=$(cat 'testA.err')
+  assertNull 'output file (T1)' "$output"
+  assertNotNull 'error file (T2)' "$error"
+  orc_log2outp testA pwd
+  output=$(cat 'testA.txt')
+  error=$(cat 'testA.err')
+  assertNotNull 'output file (T2)' "$output"
+  assertNotNull 'error file (T2)' "$error"
+  rm 'testA.err'
+  orc_createEchoFile argument_A argument_BB
+  orc_log2outp testA "$ORC_ECHO_FILE"
+  output=$(cat 'testA.txt')
+  error=$(cat 'testA.err')
+  assertNotNull 'output file (T3)' "$output"
+  assertNull 'error file (T3)' "$error"
+  assertContains 'in return' "$output" 'argument_A'
+  assertContains 'in return' "$output" 'argument_BB'
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091

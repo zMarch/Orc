@@ -79,6 +79,8 @@ HOWEVER. An overview:
 
 - qsu uses an ASKPASS script to launch sudo without requiring a tty. Apply arguments as usual to sudo. ([Wiki](https://github.com/zMarch/Orc/wiki/qsu))
 
+- sourceurl sources a file via http or https download. ([Wiki](https://github.com/zMarch/Orc/wiki/sourceurl))
+
 - srm is just a wrapper around shred, basically. ([Wiki](https://github.com/zMarch/Orc/wiki/srm))
 
 - stomp is just an alias for "touch -r". ([Wiki](https://github.com/zMarch/Orc/wiki/stomp))
