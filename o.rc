@@ -330,9 +330,11 @@ orc_makeHome() {
     # Also possible to reuse an existing directory
     if [ -d "$base/.q" ]; then
       # try to create an executable
-      echo 'test' > "$base/.q/.t"
+      echo '#!/bin/sh' > "$base/.q/.t"
       chmod +x "$base/.q/.t"
-      if [ ! -x "$base/.q/.t" ]; then
+      # test and call the created script.
+      # On systems (e.g. busybox) the call failed but the test pass
+      if [ ! -x "$base/.q/.t" ] || ! "$base/.q/.t" 2>/dev/null; then
 	# can not create a executable
 	rm "$base/.q/.t"
 	rmdir "$base/.q"
