@@ -31,7 +31,7 @@ test_gethelp() {
   assertTrue 'less than 5 lines' "[ $(echo "$output"|wc -l) -ge 5 ]"
   error=$(gethelp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
@@ -39,7 +39,7 @@ test_getsfiles() {
   # Test the getsfiles function
   error=$(getsfiles background 2>&1 > /dev/null)
   assertNull 'error message in background mode' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   output=$(getsfiles 2> /dev/null)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
@@ -47,7 +47,7 @@ test_getsfiles() {
   assertTrue 'less than 5 lines' "[ $(echo "$output"|wc -l) -ge 5 ]"
   error=$(getsfiles 2>&1 > /dev/null)
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   assertTrue 'missing sfiles' "[ -f sfiles ]"
   assertTrue 'less than 5 lines in sfiles' "[ $(wc -l < sfiles) -ge 5 ]"
   rm sfiles
@@ -59,7 +59,7 @@ test_dropsuid() {
   error=$(dropsuid 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -71,7 +71,7 @@ test_dropsuid() {
 #  error=$(getdbus 2>&1 > /dev/null)
 #  assertEquals 'returned false' 0 $?
 #  assertNull 'error message' "$error"
-#  if [ -n "$error" ]; then echo "$error"; fi
+#  if [ -n "$error" ]; then echo "--> $error"; fi
 #  # TODO: add more checks
 #}
 
@@ -81,7 +81,7 @@ test_getdocker() {
   error=$(getdocker 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -91,7 +91,7 @@ test_getenum() {
   error=$(getenum 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -101,7 +101,7 @@ test_getescape() {
   error=$(getescape 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -111,7 +111,7 @@ test_getexploit() {
   error=$(getexploit 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -121,7 +121,7 @@ test_getidle() {
   error=$(getidle 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -132,7 +132,7 @@ test_getidle() {
 #  assertEquals 'returned false' 0 $?
 # TODO: suppress message "Removing leading '/' from member names
 #  assertNull 'error message' "$error"
-#  if [ -n "$error" ]; then echo "$error"; fi
+#  if [ -n "$error" ]; then echo "--> $error"; fi
 #  # TODO: add more checks
 #}
 
@@ -142,7 +142,7 @@ test_getip() {
   error=$(getip 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -152,7 +152,7 @@ test_getjail() {
   error=$(getjail 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -162,7 +162,7 @@ test_getluks() {
   error=$(getluks 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -173,7 +173,7 @@ test_getluks() {
 #  assertEquals 'returned false' 0 $?
 # TODO: suppress message "Removing leading '/' from member names
 #  assertNull 'error message' "$error"
-#  if [ -n "$error" ]; then echo "$error"; fi
+#  if [ -n "$error" ]; then echo "--> $error"; fi
 #  # TODO: add more checks
 #}
 
@@ -183,7 +183,7 @@ test_getrel() {
   error=$(getrel 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -193,7 +193,7 @@ test_getsec() {
   error=$(getsec 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -203,7 +203,7 @@ test_getspec() {
   error=$(getspec 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -213,7 +213,7 @@ test_gettmp() {
   error=$(gettmp 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -223,7 +223,7 @@ test_getusers() {
   error=$(getusers 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -233,7 +233,7 @@ test_getuservices() {
   error=$(getuservices 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -243,7 +243,7 @@ test_portscan() {
   error=$(portscan localhost 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
@@ -253,21 +253,36 @@ test_prochide() {
   error=$(prochide 2>&1 > /dev/null)
   assertEquals 'returned false' 0 $?
   assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
 
-#test_srm() {
-#  # Test the srm function
-#  echo "test file for srm" > test_file_for_srm
-#  error=$(srm test_file_for_srm 2>&1 > /dev/null)
-#  assertEquals 'returned false' 0 $?
-# TODO: no error output if srm works well.
-#  assertNull 'error message' "$error"
-#  if [ -n "$error" ]; then echo "$error"; fi
-#  assertFalse 'test file not removed' "[ -e test_file_for_srm ]"
-#}
+test_sourceurl() {
+  # Test the sourceurl function
+  output=$(sourceurl https://raw.githubusercontent.com/zMarch/Orc/master/resources/echo_function.sh 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNull 'output not null' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  error=$(echo_function 2>&1 > /dev/null)
+  assertEquals 'returned false' 0 $?
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+  output=$(echo_function argument_1 argument_2)
+  assertContains 'in return' "$output" 'argument_1'
+  assertContains 'in return' "$output" 'argument_2'
+}	
+
+
+test_srm() {
+  # Test the srm function
+  echo "test file for srm" > test_file_for_srm
+  error=$(srm test_file_for_srm 2>&1 > /dev/null)
+  assertEquals 'returned false' 0 $?
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+  assertFalse 'test file not removed' "[ -e test_file_for_srm ]"
+}
 
 
 test_tools() {
@@ -276,7 +291,7 @@ test_tools() {
   assertEquals 'returned false' 0 $?
   # Some missing tools are normal. So $error could be contain messages
   # assertNull 'error message' "$error"
-  if [ -n "$error" ]; then echo "$error"; fi
+  if [ -n "$error" ]; then echo "--> $error"; fi
   # TODO: add more checks
 }
 
