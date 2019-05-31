@@ -263,6 +263,34 @@ test_orc_log2outp () {
 }
 
 
+test_orc_listusers () {
+  # Test the orc_listusers function
+  output=$(orc_listusers)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'less than 1 lines' "[ $(echo "$output"|wc -l) -ge 1 ]"
+  # One user per line = one word per line
+  assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
+  error=$(orc_listusers 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
+test_orc_home_of_userid () {
+  # Test the orc_home_of_userid function
+  for userid in 0 1 $(id -u)
+  do
+    output=$(orc_home_of_userid $userid)
+    assertEquals 'returned false' 0 $?
+    assertNotNull 'output is null' "$output"
+    error=$(orc_home_of_userid $userid 2>&1 > /dev/null)
+    assertNull 'error message' "$error"
+    if [ -n "$error" ]; then echo "--> $error"; fi
+  done
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
