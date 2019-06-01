@@ -303,6 +303,20 @@ test_orc_home_of_currentuser () {
 }
 
 
+test_orc_ourpts () {
+  # Test the orc_ourpts function
+  output=$(orc_ourpts)
+  assertEquals 'returned false' 0 $?
+  if [ -n "$output" ]; then
+    assertTrue 'must be 1 line' "[ $(echo "$output"|wc -l) -eq 1 ]"
+    assertTrue 'must not negative number' "[ $output -ge 0 ]"
+  fi
+  error=$(orc_ourpts 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
