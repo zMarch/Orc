@@ -281,13 +281,25 @@ test_orc_home_of_userid () {
   # Test the orc_home_of_userid function
   for userid in 0 1 $(id -u)
   do
-    output=$(orc_home_of_userid $userid)
+    output=$(orc_home_of_userid "$userid")
     assertEquals 'returned false' 0 $?
     assertNotNull 'output is null' "$output"
-    error=$(orc_home_of_userid $userid 2>&1 > /dev/null)
+    error=$(orc_home_of_userid "$userid" 2>&1 > /dev/null)
     assertNull 'error message' "$error"
     if [ -n "$error" ]; then echo "--> $error"; fi
   done
+}
+
+
+test_orc_home_of_currentuser () {
+  # Test the orc_home_of_currentuser function
+  output=$(orc_home_of_currentuser)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'home must be a dir' "[ -d $output ]"
+  error=$(orc_home_of_currentuser 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
