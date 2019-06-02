@@ -317,6 +317,27 @@ test_orc_ourpts () {
 }
 
 
+test_orc_isMinimalOsVersion () {
+  # Test the orc_isMinimalOsVersion function
+  output=$(orc_isMinimalOsVersion Linux 1 0 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertNull 'message (1)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  output=$(orc_isMinimalOsVersion Linux 1 120 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertNull 'message (2)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  output=$(orc_isMinimalOsVersion ThisIsNotAnOsName 1 0 2>&1)
+  assertNotEquals 'returned not false (3)' 0 $?
+  assertNull 'message (3)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  output=$(orc_isMinimalOsVersion Linux 123 0 2>&1)
+  assertNotEquals 'returned not false (4)' 0 $?
+  assertNull 'message (4)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
