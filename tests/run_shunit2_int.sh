@@ -187,9 +187,9 @@ test_orc_tryTcpConnection () {
 }
 
 
-test_orc_listtmp () {
-  # Test the orc_listtmp function
-  output=$(orc_listtmp)
+test_orc_listTmp () {
+  # Test the orc_listTmp function
+  output=$(orc_listTmp)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
   assertTrue 'less than 3 lines' "[ $(echo "$output"|wc -l) -ge 3 ]"
@@ -197,7 +197,7 @@ test_orc_listtmp () {
   while read -r t; do
     assertTrue 'not directory' "[ -d $t ]"
   done
-  error=$(orc_listtmp 2>&1 > /dev/null)
+  error=$(orc_listTmp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
   if [ -n "$error" ]; then echo "--> $error"; fi
 }
@@ -263,55 +263,55 @@ test_orc_log2outp () {
 }
 
 
-test_orc_listusers () {
-  # Test the orc_listusers function
-  output=$(orc_listusers)
+test_orc_listUsers () {
+  # Test the orc_listUsers function
+  output=$(orc_listUsers)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
   assertTrue 'less than 1 lines' "[ $(echo "$output"|wc -l) -ge 1 ]"
   # One user per line = one word per line
   assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
-  error=$(orc_listusers 2>&1 > /dev/null)
+  error=$(orc_listUsers 2>&1 > /dev/null)
   assertNull 'error message' "$error"
   if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
-test_orc_home_of_userid () {
-  # Test the orc_home_of_userid function
+test_orc_homeOfUserID () {
+  # Test the orc_homeOfUserID function
   for userid in 0 1 $(id -u)
   do
-    output=$(orc_home_of_userid "$userid")
+    output=$(orc_homeOfUserID "$userid")
     assertEquals 'returned false' 0 $?
     assertNotNull 'output is null' "$output"
-    error=$(orc_home_of_userid "$userid" 2>&1 > /dev/null)
+    error=$(orc_homeOfUserID "$userid" 2>&1 > /dev/null)
     assertNull 'error message' "$error"
     if [ -n "$error" ]; then echo "--> $error"; fi
   done
 }
 
 
-test_orc_home_of_currentuser () {
-  # Test the orc_home_of_currentuser function
-  output=$(orc_home_of_currentuser)
+test_orc_homeOfCurrentUser () {
+  # Test the orc_homeOfCurrentUser function
+  output=$(orc_homeOfCurrentUser)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
   assertTrue 'home must be a dir' "[ -d $output ]"
-  error=$(orc_home_of_currentuser 2>&1 > /dev/null)
+  error=$(orc_homeOfCurrentUser 2>&1 > /dev/null)
   assertNull 'error message' "$error"
   if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
-test_orc_ourpts () {
-  # Test the orc_ourpts function
-  output=$(orc_ourpts)
+test_orc_ourPts () {
+  # Test the orc_ourPts function
+  output=$(orc_ourPts)
   assertEquals 'returned false' 0 $?
   if [ -n "$output" ]; then
     assertTrue 'must be 1 line' "[ $(echo "$output"|wc -l) -eq 1 ]"
     assertTrue 'must not negative number' "[ $output -ge 0 ]"
   fi
-  error=$(orc_ourpts 2>&1 > /dev/null)
+  error=$(orc_ourPts 2>&1 > /dev/null)
   assertNull 'error message' "$error"
   if [ -n "$error" ]; then echo "--> $error"; fi
 }
