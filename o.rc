@@ -594,15 +594,17 @@ orc_isMinimalOsVersion() {
 
 
 orc_filterIpAddress() {
-  # Filter strings looks like an IPv4 or IPv6 address.
-  # Maximal one address per line is expected.
-  # The function passes all valid IPv4 addresses.
-  # Some valid IPv6 are not pass.
+  # Filters strings look like an IPv4 or IPv6 address.
+  # The function reads stdin and writes to stdout.
+  # Maximal one address per line will pass the filter.
+  # The filter passes all valid IPv4 addresses.
+  # Some valid IPv6 are do not pass the filter.
   # Ethernet addresses do not pass.
   # Arguments: none
-  # Reads stdin and writes to stdout
-  # Attention: match(s,p,a) is not supported by mawk.
-  # Pattern repeat operator {n} is not supported by mawk.
+  # The awk script support gawk and mawk. The match(s,p,a)
+  # is not supported by mawk. Also the pattern repeat operator
+  # {n} is not supported by mawk. Hence the pattern are
+  # more complicated.
   awk '
     match($0,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
       # it is a IPv4 address

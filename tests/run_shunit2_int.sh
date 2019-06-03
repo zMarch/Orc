@@ -338,6 +338,43 @@ test_orc_isMinimalOsVersion () {
 }
 
 
+test_orc_filterIpAddress () {
+  # Test the orc_filterIpAddress function
+  testinput='
+	ether 50:46:5d:dd:05:20  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+   	lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        TX packets 784  bytes 63597 (63.5 KB)
+        wlp3s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.2.7  netmask 255.255.255.0  broadcast 172.17.2.255
+        inet6 fe80::8836:5635:53b7:5706  prefixlen 64  scopeid 0x20<link>
+        ether 68:5d:43:b0:31:82  txqueuelen 1000  (Ethernet)
+        TX packets 3205  bytes 595218 (595.2 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+	0.0.0.0
+	1.2.3
+	1.2.3.4
+	255.255.255.255
+	500.500.500.500
+  '
+  correctoutput='127.0.0.1
+172.17.2.7
+fe80::8836:5635:53b7:5706
+0.0.0.0
+1.2.3.4
+255.255.255.255
+500.500.500.500'
+  output=$(echo "$testinput" | orc_filterIpAddress 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertEquals 'output invalid' "$correctoutput" "$output"
+  if [ ! "$correctoutput" = "$output" ]; then echo "--> $output"; fi
+}
+
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
