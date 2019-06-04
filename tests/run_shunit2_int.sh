@@ -268,7 +268,7 @@ test_orc_listUsers () {
   output=$(orc_listUsers)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
-  assertTrue 'less than 1 lines' "[ $(echo "$output"|wc -l) -ge 1 ]"
+  assertTrue 'less than 1 line' "[ $(echo "$output"|wc -l) -ge 1 ]"
   # One user per line = one word per line
   assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
   error=$(orc_listUsers 2>&1 > /dev/null)
@@ -372,6 +372,22 @@ fe80::8836:5635:53b7:5706
   assertNotNull 'output is null' "$output"
   assertEquals 'output invalid' "$correctoutput" "$output"
   if [ ! "$correctoutput" = "$output" ]; then echo "--> $output"; fi
+}
+
+
+test_orc_listHomes () {
+  # Test the orc_listHomes function
+  output=$(orc_listHomes)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'less than 3 lines' "[ $(echo "$output"|wc -l) -ge 3 ]"
+  echo "$output" |
+  while read -r t; do
+    assertTrue 'not directory' "[ -d $t ]"
+  done
+  error=$(orc_listHomes 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
 }
 
 
