@@ -391,6 +391,29 @@ test_orc_listHomes () {
 }
 
 
+test_orc_flatFileName () {
+  # Test the orc_flatFileName function
+  output=$(orc_flatFileName "test" 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'check (1)' "test" "$output"
+  output=$(orc_flatFileName "test second" 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'check (2)' "test second" "$output"
+  output=$(orc_flatFileName "test/second" 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'check (3)' "test_second" "$output"
+  output=$(orc_flatFileName "/test" 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'check (4)' "_test" "$output"
+  output=$(orc_flatFileName "/test/second" 2>&1)
+  assertEquals 'returned false (5)' 0 $?
+  assertEquals 'check (5)' "_test_second" "$output"
+  output=$(orc_flatFileName "/test/second/" 2>&1)
+  assertEquals 'returned false (6)' 0 $?
+  assertEquals 'check (6)' "_test_second_" "$output"
+}
+ 
+
 oneTimeSetUp() {
   # Loads the orc at test setup
   # shellcheck disable=SC1091
