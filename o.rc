@@ -289,7 +289,7 @@ sys.exit(0)
 }
 
 
-orc_listtmp() {
+orc_listTmp() {
   # List tmpfs directories with access information.
   # Search in the list of tmpfs filesystem and in a list of common
   # file destinations.
@@ -320,7 +320,7 @@ orc_makeHome() {
   # Creates a home directory.
   # Sets the variable $HOME to this new created directory.
   # Searchs a temporary directory without noexec flag as base. 
-  for base in $(orc_listtmp); do
+  for base in $(orc_listTmp); do
     if [ ! -r "$base" ] || [ ! -w "$base" ] || [ ! -x "$base" ]; then
       # no read, no write or no searchable access
       continue
@@ -514,7 +514,7 @@ orc_log2outp() {
 }
 
 
-orc_listusers() {
+orc_listUsers() {
   # Listing users in passwd with login shells.
   # Reject shells named *nologin or *false as valid shells.
   getent passwd |
@@ -524,7 +524,7 @@ orc_listusers() {
 }
 
 
-orc_home_of_userid () {
+orc_homeOfUserID () {
   # Gets the home directory of the user.
   # Argument: ID of the user.
   # Output to stdout: home directory
@@ -537,15 +537,15 @@ orc_home_of_userid () {
 }
 
 
-orc_home_of_currentuser () {
+orc_homeOfCurrentUser () {
   # Gets the home directory of the current user.
   # Argument: -
   # Output to stdout: home directory
-  orc_home_of_userid "$(id -u)"
+  orc_homeOfUserID "$(id -u)"
 }
 
 
-orc_ourpts() {
+orc_ourPts() {
   # Get our PTS.
   # Writes nothing if not connected to a PTS.
   mytty=$(tty)
@@ -561,7 +561,7 @@ orc_isMinimalOsVersion() {
   # Checks the OS name and version.
   # Arguments: OS name (e.g. Linux)
   #            First part of the version number
-  #            Secoend part of the version numer
+  #            Second part of the version numer
   # Return: 0 if OS name is equal and version is equal or greater.
   #         1 if OS name is not equal
   #         2 if OS name is equal but version is less.
@@ -594,15 +594,17 @@ orc_isMinimalOsVersion() {
 
 
 orc_filterIpAddress() {
-  # Filter strings looks like an IPv4 or IPv6 address.
-  # Maximal one address per line is expected.
-  # The function passes all valid IPv4 addresses.
-  # Some valid IPv6 are not pass.
+  # Filters strings look like an IPv4 or IPv6 address.
+  # The function reads stdin and writes to stdout.
+  # Maximal one address per line will pass the filter.
+  # The filter passes all valid IPv4 addresses.
+  # Some valid IPv6 are do not pass the filter.
   # Ethernet addresses do not pass.
   # Arguments: none
-  # Reads stdin and writes to stdout
-  # Attention: match(s,p,a) is not supported by mawk.
-  # Pattern repeat operator {n} is not supported by mawk.
+  # The awk script support gawk and mawk. The match(s,p,a)
+  # is not supported by mawk. Also the pattern repeat operator
+  # {n} is not supported by mawk. Hence the pattern are
+  # more complicated.
   awk '
     match($0,/([0-9][0-9]?[0-9]?\.)+[0-9][0-9]?[0-9]?/) {
       # it is a IPv4 address
@@ -978,13 +980,13 @@ echo "scheduling a reverse shell to launch later..."
 
 getusers() {
   echo "Listing valid users with shells."
-  orc_listusers
+  orc_listUsers
 }
 
 
 getuservices() {
   echo "Listing all running services with non-user accounts in passwd."
-  { orc_listusers; ps --no-header -weFH; } |
+  { orc_listUsers; ps --no-header -weFH; } |
   awk 'NF==1 {users[$1]=1}
        NF>1 && !($1 in users) {print}'
 }
@@ -1018,7 +1020,7 @@ getidle() {
   # Arguments : none
   # Globals   : our_pty could contain the number of our PTY
   export our_pty
-  our_pty=$(orc_ourpts)
+  our_pty=$(orc_ourPts)
   # using stat and the shell glob, so no quotes
   stat /dev/pts/* -c '%n %X %U' |
   awk -v now="$(date +%s)" '$1 ~ /\/[0-9]+$/ {
@@ -1361,7 +1363,7 @@ hangup() {
     return 1
   fi
   if [ "$2" = "other" ]; then
-    NOT_THIS=$(orc_ourpts)
+    NOT_THIS=$(orc_ourPts)
   else
     NOT_THIS=""
   fi
@@ -1439,7 +1441,7 @@ getenum() {
 
 gettmp () {
   echo 'Typical directories for tmp files:'
-  for i in $(orc_listtmp); do
+  for i in $(orc_listTmp); do
     printf "%s" "$i"
     TTT=0
     if [ -x "$i" ]; then
@@ -1599,5 +1601,5 @@ echo "=== Welcome to Orc Shell ==="
 echo "Run gethelp to see a list of commands."
 echo "$HOME should be deleted upon exit."
 PS1='$USER'"@$(hostname):"'$PWD'"$ " 
-NHOME=$(orc_home_of_currentuser)
+NHOME=$(orc_homeOfCurrentUser)
 #rm $ENV

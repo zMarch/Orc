@@ -187,9 +187,9 @@ test_orc_tryTcpConnection () {
 }
 
 
-test_orc_listtmp () {
-  # Test the orc_listtmp function
-  output=$(orc_listtmp)
+test_orc_listTmp () {
+  # Test the orc_listTmp function
+  output=$(orc_listTmp)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
   assertTrue 'less than 3 lines' "[ $(echo "$output"|wc -l) -ge 3 ]"
@@ -197,7 +197,7 @@ test_orc_listtmp () {
   while read -r t; do
     assertTrue 'not directory' "[ -d $t ]"
   done
-  error=$(orc_listtmp 2>&1 > /dev/null)
+  error=$(orc_listTmp 2>&1 > /dev/null)
   assertNull 'error message' "$error"
   if [ -n "$error" ]; then echo "--> $error"; fi
 }
@@ -260,6 +260,118 @@ test_orc_log2outp () {
   assertNull 'error file (T3)' "$error"
   assertContains 'in return' "$output" 'argument_A'
   assertContains 'in return' "$output" 'argument_BB'
+}
+
+
+test_orc_listUsers () {
+  # Test the orc_listUsers function
+  output=$(orc_listUsers)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'less than 1 lines' "[ $(echo "$output"|wc -l) -ge 1 ]"
+  # One user per line = one word per line
+  assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
+  error=$(orc_listUsers 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
+test_orc_homeOfUserID () {
+  # Test the orc_homeOfUserID function
+  for userid in 0 1 $(id -u)
+  do
+    output=$(orc_homeOfUserID "$userid")
+    assertEquals 'returned false' 0 $?
+    assertNotNull 'output is null' "$output"
+    error=$(orc_homeOfUserID "$userid" 2>&1 > /dev/null)
+    assertNull 'error message' "$error"
+    if [ -n "$error" ]; then echo "--> $error"; fi
+  done
+}
+
+
+test_orc_homeOfCurrentUser () {
+  # Test the orc_homeOfCurrentUser function
+  output=$(orc_homeOfCurrentUser)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'home must be a dir' "[ -d $output ]"
+  error=$(orc_homeOfCurrentUser 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
+test_orc_ourPts () {
+  # Test the orc_ourPts function
+  output=$(orc_ourPts)
+  assertEquals 'returned false' 0 $?
+  if [ -n "$output" ]; then
+    assertTrue 'must be 1 line' "[ $(echo "$output"|wc -l) -eq 1 ]"
+    assertTrue 'must not negative number' "[ $output -ge 0 ]"
+  fi
+  error=$(orc_ourPts 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
+test_orc_isMinimalOsVersion () {
+  # Test the orc_isMinimalOsVersion function
+  output=$(orc_isMinimalOsVersion Linux 1 0 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertNull 'message (1)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  output=$(orc_isMinimalOsVersion Linux 1 120 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertNull 'message (2)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  output=$(orc_isMinimalOsVersion ThisIsNotAnOsName 1 0 2>&1)
+  assertNotEquals 'returned not false (3)' 0 $?
+  assertNull 'message (3)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+  output=$(orc_isMinimalOsVersion Linux 123 0 2>&1)
+  assertNotEquals 'returned not false (4)' 0 $?
+  assertNull 'message (4)' "$output"
+  if [ -n "$output" ]; then echo "--> $output"; fi
+}
+
+
+test_orc_filterIpAddress () {
+  # Test the orc_filterIpAddress function
+  testinput='
+	ether 50:46:5d:dd:05:20  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+   	lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        TX packets 784  bytes 63597 (63.5 KB)
+        wlp3s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.2.7  netmask 255.255.255.0  broadcast 172.17.2.255
+        inet6 fe80::8836:5635:53b7:5706  prefixlen 64  scopeid 0x20<link>
+        ether 68:5d:43:b0:31:82  txqueuelen 1000  (Ethernet)
+        TX packets 3205  bytes 595218 (595.2 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+	0.0.0.0
+	1.2.3
+	1.2.3.4
+	255.255.255.255
+	500.500.500.500
+  '
+  correctoutput='127.0.0.1
+172.17.2.7
+fe80::8836:5635:53b7:5706
+0.0.0.0
+1.2.3.4
+255.255.255.255
+500.500.500.500'
+  output=$(echo "$testinput" | orc_filterIpAddress 2>&1)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertEquals 'output invalid' "$correctoutput" "$output"
+  if [ ! "$correctoutput" = "$output" ]; then echo "--> $output"; fi
 }
 
 
