@@ -412,6 +412,36 @@ test_orc_flatFileName () {
   assertEquals 'returned false (6)' 0 $?
   assertEquals 'check (6)' "_test_second_" "$output"
 }
+
+
+test_orc_testAndCopy () {
+  # Test the orc_testAndCopy function.
+  mkdir _test_source
+  mkdir _test_destination
+  echo "File 1" > _test_source/f1
+  echo "File 2" > _test_source/f2
+  echo "File 3" > _test_source/f3
+  chmod 222 _test_source/f2
+  chmod 700 _test_source/f3
+  output=$(orc_testAndCopy _test_source/f1 _test_destination 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertNull 'output not  null (1)' "$output"
+  output=$(orc_testAndCopy _test_source/f2 _test_destination 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertNull 'output not  null (2)' "$output"
+  output=$(orc_testAndCopy _test_source/f3 _test_destination 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertNull 'output not  null (3)' "$output"
+  output=$(orc_testAndCopy _test_source/ff _test_destination 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertNull 'output not  null (4)' "$output"
+  assertTrue  'missing   (1)' "[ -f _test_destination/_test_source_f1 ]"
+  assertFalse 'existing (2)'  "[ -f _test_destination/_test_source_f2 ]"
+  assertTrue  'missing   (3)' "[ -f _test_destination/_test_source_f3 ]"
+  assertFalse 'existing (4)'  "[ -f _test_destination/_test_source_ff ]"
+  rm -r _test_source
+  rm -r _test_destination
+}
  
 
 oneTimeSetUp() {
