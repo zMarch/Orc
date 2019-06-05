@@ -214,6 +214,9 @@ test_orc_makeHome () {
 }
 
 
+# TODO: add test of orc_archive
+
+
 test_orc_createEchoFile () {
   # Test the orc_createEchoFile function
   output=$(orc_createEchoFile argument_A argument_BB 2>&1)
@@ -230,6 +233,9 @@ test_orc_createEchoFile () {
   assertContains 'in return' "$output" 'argument_A'
   assertContains 'in return' "$output" 'argument_BB'
 }
+
+
+# TODO: add test of orc_httpsProxyReminder
 
 
 test_orc_log2outp () {
@@ -375,6 +381,10 @@ fe80::8836:5635:53b7:5706
 }
 
 
+# TODO: add test of funtcion orc_pingBroadcast
+# (possible way: replace ping with a function named ping
+# which writes the addresses into a file.)
+
 test_orc_listHomes () {
   # Test the orc_listHomes function
   output=$(orc_listHomes)
@@ -425,24 +435,68 @@ test_orc_testAndCopy () {
   chmod 700 _test_source/f3
   output=$(orc_testAndCopy _test_source/f1 _test_destination 2>&1)
   assertEquals 'returned false (1)' 0 $?
-  assertNull 'output not  null (1)' "$output"
+  assertNull 'output not null (1)' "$output"
   output=$(orc_testAndCopy _test_source/f2 _test_destination 2>&1)
   assertEquals 'returned false (2)' 0 $?
-  assertNull 'output not  null (2)' "$output"
+  assertNull 'output not null (2)' "$output"
   output=$(orc_testAndCopy _test_source/f3 _test_destination 2>&1)
   assertEquals 'returned false (3)' 0 $?
-  assertNull 'output not  null (3)' "$output"
+  assertNull 'output not null (3)' "$output"
   output=$(orc_testAndCopy _test_source/ff _test_destination 2>&1)
   assertEquals 'returned false (4)' 0 $?
-  assertNull 'output not  null (4)' "$output"
-  assertTrue  'missing   (1)' "[ -f _test_destination/_test_source_f1 ]"
-  assertFalse 'existing (2)'  "[ -f _test_destination/_test_source_f2 ]"
-  assertTrue  'missing   (3)' "[ -f _test_destination/_test_source_f3 ]"
-  assertFalse 'existing (4)'  "[ -f _test_destination/_test_source_ff ]"
+  assertNull 'output not null (4)' "$output"
+  assertTrue  'missing  (1)' "[ -f _test_destination/_test_source_f1 ]"
+  assertFalse 'existing (2)' "[ -f _test_destination/_test_source_f2 ]"
+  assertTrue  'missing  (3)' "[ -f _test_destination/_test_source_f3 ]"
+  assertFalse 'existing (4)' "[ -f _test_destination/_test_source_ff ]"
   rm -r _test_source
   rm -r _test_destination
 }
- 
+
+
+# TODO: add test of orc_collectOtherHostsInfo
+
+
+test_orc_IP4toInteger () {
+  # Tests the orc_IP4toInteger function.
+  output=$(orc_IP4toInteger 0.0.0.1 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 1 "$output"
+  output=$(orc_IP4toInteger 0.0.1.1 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 257 "$output"
+  output=$(orc_IP4toInteger 0.1.1.1 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 65793 "$output"
+  output=$(orc_IP4toInteger 1.1.1.1 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'output (4)' 16843009 "$output"
+}
+
+
+test_orc_integerToIP4 () {
+  # Tests the orc_integerToIP4 function.
+  output=$(orc_integerToIP4 1 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 0.0.0.1 "$output"
+  output=$(orc_integerToIP4 257 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 0.0.1.1 "$output"
+  output=$(orc_integerToIP4 65793 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 0.1.1.1 "$output"
+  output=$(orc_integerToIP4 16843009 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'output (4)' 1.1.1.1 "$output"
+  for n in 0 1 7 2 21 24 32 128 200 255
+  do
+    for t in "$n.2.4.8" "$n.0.0.0" "$n.255.255.255" "$n.128.64.32" "$n.22.23.24"
+    do
+      assertEquals "$t" "$(orc_integerToIP4 "$(orc_IP4toInteger $t)")" 
+    done
+  done
+}
+
 
 oneTimeSetUp() {
   # Loads the orc at test setup
