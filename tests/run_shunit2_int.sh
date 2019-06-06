@@ -493,8 +493,59 @@ test_orc_integerToIP4 () {
     for t in "$n.2.4.8" "$n.0.0.0" "$n.255.255.255" "$n.128.64.32" "$n.22.23.24"
     do
       assertEquals "$t" "$(orc_integerToIP4 "$(orc_IP4toInteger $t)")" 
+      error=$(orc_IP4toInteger $t 2>&1 > /dev/null)
+      assertNull 'error message (1)' "$error"
+      if [ -n "$error" ]; then echo "--> $error"; fi
+      error=$(orc_integerToIP4 "$(orc_IP4toInteger $t)" 2>&1 > /dev/null)
+      assertNull 'error message (2)' "$error"
+      if [ -n "$error" ]; then echo "--> $error"; fi
     done
   done
+}
+
+
+test_orc_firstIP4integer() {
+  # Tests the orc_firstIP4integer function
+  output=$(orc_integerToIP4 "$(orc_firstIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.0)")")
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 172.17.2.1 "$output"
+  output=$(orc_integerToIP4 "$(orc_firstIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.192)")")
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 172.17.2.1 "$output"
+  output=$(orc_integerToIP4 "$(orc_firstIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.240.0)")")
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 172.17.0.1 "$output"
+}
+
+
+test_orc_lastIP4integer() {
+  # Tests the orc_firstIP4integer function
+  output=$(orc_integerToIP4 "$(orc_lastIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.0)")")
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 172.17.2.254 "$output"
+  output=$(orc_integerToIP4 "$(orc_lastIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.192)")")
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 172.17.2.62 "$output"
+  output=$(orc_integerToIP4 "$(orc_lastIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.240.0)")")
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 172.17.15.254 "$output"
+}
+
+
+test_orc_lengthToIP4netmask() {
+  # Tests the orc_lengthToIP4netmask function
+  output=$(orc_lengthToIP4netmask 1 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 128.0.0.0 "$output"
+  output=$(orc_lengthToIP4netmask 20 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 255.255.240.0 "$output"
+  output=$(orc_lengthToIP4netmask 24 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 255.255.255.0 "$output"
+  output=$(orc_lengthToIP4netmask 26 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'output (4)' 255.255.255.192 "$output"
 }
 
 
