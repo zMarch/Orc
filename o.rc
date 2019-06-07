@@ -664,9 +664,16 @@ orc_flatFileName() {
 
 
 orc_testAndCopy() {
-  # Test read access, then copy.
-  # Arguments: File to copy.
-  #            Destination directory.
+  # Test read access. Then copy if read access is possible.
+  # The function copies only if a read access is possible.
+  # The function is silent, does not write a message on copy
+  # or on missing read access and skipping the copy.
+  # Copies the file into the destination directory with the
+  # 'flat name' of the source. This means the full path given
+  # as argument is transformed into a name like '_path_name'.
+  # (See function orc_flatFileName.)
+  # Arguments: File to copy (could contain a path).
+  #            Destination directory (without file name).
   if [ $# -ne 2 ]; then
     echo 'Error: need two arguments: file and destination' >&2
     return 1

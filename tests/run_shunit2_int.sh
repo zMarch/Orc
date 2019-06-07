@@ -214,6 +214,9 @@ test_orc_makeHome () {
 }
 
 
+# TODO: add test of orc_archive
+
+
 test_orc_createEchoFile () {
   # Test the orc_createEchoFile function
   output=$(orc_createEchoFile argument_A argument_BB 2>&1)
@@ -230,6 +233,9 @@ test_orc_createEchoFile () {
   assertContains 'in return' "$output" 'argument_A'
   assertContains 'in return' "$output" 'argument_BB'
 }
+
+
+# TODO: add test of orc_httpsProxyReminder
 
 
 test_orc_log2outp () {
@@ -268,7 +274,7 @@ test_orc_listUsers () {
   output=$(orc_listUsers)
   assertEquals 'returned false' 0 $?
   assertNotNull 'output is null' "$output"
-  assertTrue 'less than 1 lines' "[ $(echo "$output"|wc -l) -ge 1 ]"
+  assertTrue 'less than 1 line' "[ $(echo "$output"|wc -l) -ge 1 ]"
   # One user per line = one word per line
   assertEquals 'lines and words' "$(echo "$output"|wc -l)" "$(echo "$output"|wc -w)"
   error=$(orc_listUsers 2>&1 > /dev/null)
@@ -372,6 +378,174 @@ fe80::8836:5635:53b7:5706
   assertNotNull 'output is null' "$output"
   assertEquals 'output invalid' "$correctoutput" "$output"
   if [ ! "$correctoutput" = "$output" ]; then echo "--> $output"; fi
+}
+
+
+# TODO: add test of funtcion orc_pingBroadcast
+# (possible way: replace ping with a function named ping
+# which writes the addresses into a file.)
+
+test_orc_listHomes () {
+  # Test the orc_listHomes function
+  output=$(orc_listHomes)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertTrue 'less than 3 lines' "[ $(echo "$output"|wc -l) -ge 3 ]"
+  echo "$output" |
+  while read -r t; do
+    assertTrue 'not directory' "[ -d $t ]"
+  done
+  error=$(orc_listHomes 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
+test_orc_flatFileName () {
+  # Test the orc_flatFileName function
+  output=$(orc_flatFileName "test" 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'check (1)' "test" "$output"
+  output=$(orc_flatFileName "test second" 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'check (2)' "test second" "$output"
+  output=$(orc_flatFileName "test/second" 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'check (3)' "test_second" "$output"
+  output=$(orc_flatFileName "/test" 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'check (4)' "_test" "$output"
+  output=$(orc_flatFileName "/test/second" 2>&1)
+  assertEquals 'returned false (5)' 0 $?
+  assertEquals 'check (5)' "_test_second" "$output"
+  output=$(orc_flatFileName "/test/second/" 2>&1)
+  assertEquals 'returned false (6)' 0 $?
+  assertEquals 'check (6)' "_test_second_" "$output"
+}
+
+
+test_orc_testAndCopy () {
+  # Test the orc_testAndCopy function.
+  mkdir _test_source
+  mkdir _test_destination
+  echo "File 1" > _test_source/f1
+  echo "File 2" > _test_source/f2
+  echo "File 3" > _test_source/f3
+  chmod 222 _test_source/f2
+  chmod 700 _test_source/f3
+  output=$(orc_testAndCopy _test_source/f1 _test_destination 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertNull 'output not null (1)' "$output"
+  output=$(orc_testAndCopy _test_source/f2 _test_destination 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertNull 'output not null (2)' "$output"
+  output=$(orc_testAndCopy _test_source/f3 _test_destination 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertNull 'output not null (3)' "$output"
+  output=$(orc_testAndCopy _test_source/ff _test_destination 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertNull 'output not null (4)' "$output"
+  assertTrue  'missing  (1)' "[ -f _test_destination/_test_source_f1 ]"
+  assertFalse 'existing (2)' "[ -f _test_destination/_test_source_f2 ]"
+  assertTrue  'missing  (3)' "[ -f _test_destination/_test_source_f3 ]"
+  assertFalse 'existing (4)' "[ -f _test_destination/_test_source_ff ]"
+  rm -r _test_source
+  rm -r _test_destination
+}
+
+
+# TODO: add test of orc_collectOtherHostsInfo
+
+
+test_orc_IP4toInteger () {
+  # Tests the orc_IP4toInteger function.
+  output=$(orc_IP4toInteger 0.0.0.1 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 1 "$output"
+  output=$(orc_IP4toInteger 0.0.1.1 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 257 "$output"
+  output=$(orc_IP4toInteger 0.1.1.1 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 65793 "$output"
+  output=$(orc_IP4toInteger 1.1.1.1 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'output (4)' 16843009 "$output"
+}
+
+
+test_orc_integerToIP4 () {
+  # Tests the orc_integerToIP4 function.
+  output=$(orc_integerToIP4 1 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 0.0.0.1 "$output"
+  output=$(orc_integerToIP4 257 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 0.0.1.1 "$output"
+  output=$(orc_integerToIP4 65793 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 0.1.1.1 "$output"
+  output=$(orc_integerToIP4 16843009 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'output (4)' 1.1.1.1 "$output"
+  for n in 0 1 7 2 21 24 32 128 200 255
+  do
+    for t in "$n.2.4.8" "$n.0.0.0" "$n.255.255.255" "$n.128.64.32" "$n.22.23.24"
+    do
+      assertEquals "$t" "$(orc_integerToIP4 "$(orc_IP4toInteger $t)")" 
+      error=$(orc_IP4toInteger $t 2>&1 > /dev/null)
+      assertNull 'error message (1)' "$error"
+      if [ -n "$error" ]; then echo "--> $error"; fi
+      error=$(orc_integerToIP4 "$(orc_IP4toInteger $t)" 2>&1 > /dev/null)
+      assertNull 'error message (2)' "$error"
+      if [ -n "$error" ]; then echo "--> $error"; fi
+    done
+  done
+}
+
+
+test_orc_firstIP4integer() {
+  # Tests the orc_firstIP4integer function
+  output=$(orc_integerToIP4 "$(orc_firstIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.0)")")
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 172.17.2.1 "$output"
+  output=$(orc_integerToIP4 "$(orc_firstIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.192)")")
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 172.17.2.1 "$output"
+  output=$(orc_integerToIP4 "$(orc_firstIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.240.0)")")
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 172.17.0.1 "$output"
+}
+
+
+test_orc_lastIP4integer() {
+  # Tests the orc_firstIP4integer function
+  output=$(orc_integerToIP4 "$(orc_lastIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.0)")")
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 172.17.2.254 "$output"
+  output=$(orc_integerToIP4 "$(orc_lastIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.255.192)")")
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 172.17.2.62 "$output"
+  output=$(orc_integerToIP4 "$(orc_lastIP4integer "$(orc_IP4toInteger 172.17.2.15)" "$(orc_IP4toInteger 255.255.240.0)")")
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 172.17.15.254 "$output"
+}
+
+
+test_orc_lengthToIP4netmask() {
+  # Tests the orc_lengthToIP4netmask function
+  output=$(orc_lengthToIP4netmask 1 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertEquals 'output (1)' 128.0.0.0 "$output"
+  output=$(orc_lengthToIP4netmask 20 2>&1)
+  assertEquals 'returned false (2)' 0 $?
+  assertEquals 'output (2)' 255.255.240.0 "$output"
+  output=$(orc_lengthToIP4netmask 24 2>&1)
+  assertEquals 'returned false (3)' 0 $?
+  assertEquals 'output (3)' 255.255.255.0 "$output"
+  output=$(orc_lengthToIP4netmask 26 2>&1)
+  assertEquals 'returned false (4)' 0 $?
+  assertEquals 'output (4)' 255.255.255.192 "$output"
 }
 
 
