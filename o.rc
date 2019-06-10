@@ -1038,6 +1038,13 @@ getidle() {
   # reminder: do not use gawk functions, e.g. systime
 }
 
+getsctp() {
+if orc_existsProg checksctp; then
+	if checksctp 2>&1 | grep -q "SCTP supported"; then
+	echo "SCTP enabled"
+	fi
+fi
+}
 
 srm() {
   # secure shredding of files
@@ -1521,6 +1528,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]      getenum - get kernel, glibc, and dbus versions
 [*]    getescape - attempt to escape chroot via bad privs
 [*]                on the /proc/ filesystem
+[*]	getsctp - check if the box has support for SCTP
 [*]   getexploit - download and run linux-exploit-suggester
 [*]      getidle - list all ptys and their idle times accurately.
 [*]      getinfo - create a tar.xz of useful command output
