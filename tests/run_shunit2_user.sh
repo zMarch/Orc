@@ -208,6 +208,16 @@ test_getspec() {
 }
 
 
+test_getsctp() {
+  # Test the getsctp function
+  error=$(getsctp 2>&1 > /dev/null)
+  assertEquals 'returned false' 0 $?
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+  # TODO: add more checks
+}
+
+
 test_gettmp() {
   # Test the gettmp function
   error=$(gettmp 2>&1 > /dev/null)
