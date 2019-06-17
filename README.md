@@ -39,7 +39,7 @@ HOWEVER. An overview:
 
 - getexploit pulls down the linux exploit suggester ([Wiki](https://github.com/zMarch/Orc/wiki/getexploit))
 
-- getsctp checks if SCTP support is enabled.
+- getsctp checks if SCTP support is enabled. ([Wiki](https://github.com/zMarch/Orc/wiki/getsctp))
 
 - getidle gives you an accurate idle time for ptys, letting you see how recently other users have been active. ([Wiki](https://github.com/zMarch/Orc/wiki/getidle))
 
