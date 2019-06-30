@@ -1038,13 +1038,46 @@ getidle() {
   # reminder: do not use gawk functions, e.g. systime
 }
 
+
 getsctp() {
-if orc_existsProg checksctp; then
-	if checksctp 2>&1 | grep -q "SCTP supported"; then
-	echo "SCTP enabled"
-	fi
-fi
+  # Print info about sctp connection support on the box.
+  # Arguments : none
+  # Output    : prints info to stdout
+  # 1) Try to load the sctp kernel module
+  #    The load could fail if the user can not load kernel modules
+  #    or the module does not exists.
+  modprobe sctp > /dev/null 2>&1
+  # 2) Info about the stp kernel info
+  if modinfo sctp > /dev/null 2>&1; then
+    if grep -qi '^sctp ' /proc/modules; then
+      echo 'SCTP kernel module loaded'
+    else
+      echo 'SCTP kernel module exists but is not loaded'
+    fi
+  fi
+  # 3) Info about sctp command line tools.
+  #    sctp support but not installed checksctp tool is possible.
+  if orc_existsProg checksctp; then
+    if checksctp 2>&1 | grep -qi 'SCTP supported'; then
+      if orc_existsProg withsctp; then
+        echo 'SCTP enabled and withsctp callable'
+      else
+        echo 'SCTP enabled but withsctp is not callable'
+      fi
+    fi
+  fi
+  # 4) Info about listening and non-listening sockets.
+  if orc_existsProg ss; then
+    if [ "$(ss --all --sctp 2> /dev/null | wc -l)" -gt 1 ]; then
+      echo 'TCP sockets in use'
+    fi
+  elif orc_existsProg netstat; then
+    if netstat -a --sctp 2> /dev/null | grep -qi '^sctp' ; then
+      echo 'SCTP sockets in use'
+    fi
+  fi
 }
+
 
 srm() {
   # secure shredding of files
