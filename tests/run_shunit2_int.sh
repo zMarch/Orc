@@ -13,12 +13,12 @@
 # The shunit2 framework must be loaded in the ./shunit2 directory.
 if [ ! -f ./shunit2/shunit2 ]; then
   echo 'Error: missing the shunit2 script' >&2
-  return 1
+  exit 1
 fi
 # The o.rc must be located in the cwd directory.
 if [ ! -f ./o.rc ]; then
   echo 'missing the o.rc script in the cwd' >&2
-  return 1
+  exit 1
 fi
 
 
@@ -558,4 +558,3 @@ oneTimeSetUp() {
 
 # shellcheck disable=SC1091
 . ./shunit2/shunit2
-

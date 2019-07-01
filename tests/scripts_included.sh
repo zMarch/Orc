@@ -60,5 +60,4 @@ for address in $urls; do
   fi
 done
 
-
-return $errorFlag
+exit $errorFlag
