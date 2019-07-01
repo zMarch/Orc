@@ -322,7 +322,7 @@ orc_makeHome() {
   # Searchs a temporary directory without noexec flag as base. 
   for base in $(orc_listTmp); do
     if [ ! -r "$base" ] || [ ! -w "$base" ] || [ ! -x "$base" ]; then
-      # no read, no write or no searchable access
+      # no read, no write or no search-able access
       continue
     fi
     # Try to create a home directory
@@ -419,7 +419,7 @@ fi
 trap 'rm -rf $HOME' EXIT TERM INT
 
 
-# Creates a copy of this scipt in variable backup
+# Creates a copy of this script in variable backup
 # Should be start like "ENV=o.rc sh -i".
 backup=''
 if [ -n "$BASH" ]; then
@@ -562,7 +562,7 @@ orc_isMinimalOsVersion() {
   # Checks the OS name and version.
   # Arguments: OS name (e.g. Linux)
   #            First part of the version number
-  #            Second part of the version numer
+  #            Second part of the version number
   # Return: 0 if OS name is equal and version is equal or greater.
   #         1 if OS name is not equal
   #         2 if OS name is equal but version is less.
@@ -1134,13 +1134,13 @@ qsu() {
 
 
 memexec() {
-  # Execute a binary program or a script file in-memory from webserver.
+  # Execute a binary program or a script file in-memory from web-server.
   # Stores the downloaded file in an anonymous file in the
   # /proc/self process memory.
   # If this is not possible the file is stored in the $HOME
   # directory of orc, which is typical a tmpfs.
   # Argument: URL of the binary, http or https is supported.
-  #           other arguments are passed thru to the program/script
+  #           other arguments are passed through to the program/script
   # Global:   http_proxy and https_proxy variables could be used
   #           to defined a proxy for the download.
   orc_local url interpreter
@@ -1319,7 +1319,7 @@ portscan() {
 
 fpssh() {
   # pull ssh remote host public fingerprints
-  # Argument: host name, arguments passed thru to ssh-keyscan
+  # Argument: host name, arguments passed through to ssh-keyscan
   if [ $# -lt 1 ]; then
     echo 'Error: fpssh needs host name as argument' >&2
     return 1
@@ -1332,7 +1332,7 @@ fpssh() {
 }
 
 getip() {
-#we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
+#we use akamai and google here because they're gonna look less dodgy in SOC's logs
 echo 'Attempting to get IP...'
 printf 'HTTP says: '
 	orc_loadURL 'https://whatismyip.akamai.com'
@@ -1348,7 +1348,7 @@ printf 'DNS says: '
 }
 
 prochide() {
-  # Execute a program hiden by a long program name.
+  # Execute a program hidden by a long program name.
   # Arguments: program to execute with optional arguments.
   # Method   : use the longest command line of the current running
   #            processes as name of the program to start.
@@ -1368,7 +1368,7 @@ getnet() {
   echo 'Broadcast ping is done.'
   echo "Pulling known hosts from some files and writing to $HOME/kh ..."
   orc_collectOtherHostsInfo
-  echo "Pinging local IPv4 addresse in background writing $HOME/ips ..."
+  echo "Pinging local IPv4 address in background writing $HOME/ips ..."
   orc_inetAddressAndMask |
    while read -r addr mask; do
      echo "Pinging subnet around $addr with mask $mask"
@@ -1582,7 +1582,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]       hangup - terminate someones PTS by killing their SSH process.
 [*]                Very loud, DO NOT USE.
 [*]                hangup [PTS NUMBER]
-[*]      memexec - execute a binary in-memory from a webserver
+[*]      memexec - execute a binary in-memory from a web-server
 [*]                memexec [full URI] [program arguments]
 [*]     portscan - run a portscan against common ports - portscan [host]
 [*]     prochide - run a program with $0 changed to the longest entry in ps
