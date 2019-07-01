@@ -335,12 +335,13 @@ orc_makeHome() {
       # test and call the created script.
       # On systems (e.g. busybox) the call failed but the test pass
       if [ ! -x "$base/.q/.t" ] || ! "$base/.q/.t" 2>/dev/null; then
-	# can not create a executable
-	rm "$base/.q/.t"
-	rmdir "$base/.q"
+        # can not create a executable
+        # remove test file; use -f to prevent any prompt
+        rm -f "$base/.q/.t"
+        rmdir "$base/.q"
         continue
       fi
-      rm "$base/.q/.t"
+      rm -f "$base/.q/.t"
       # this is a good home
       HOME="$base/.q"
       return
@@ -375,7 +376,7 @@ orc_archive () {
     tar -cJf "$1.tar.xz" "$2" && ORC_ARCHIVE_FILE="$1.tar.xz"
     if [ -z "$ORC_ARCHIVE_FILE" ] && orc_existsProg xz; then
       # try tar with external xz compression
-      { tar -cf "$1.tar" "$2" && xz -9 "$1.tar" && ORC_ARCHIVE_FILE="$1.tar.xz"; } || rm "$1.tar"
+      { tar -cf "$1.tar" "$2" && xz -9 "$1.tar" && ORC_ARCHIVE_FILE="$1.tar.xz"; } || rm -f "$1.tar"
     fi
     if [ -z "$ORC_ARCHIVE_FILE" ]; then
       # try the old gzip inside tar
@@ -1128,7 +1129,7 @@ qsu() {
   orc_createEchoFile "$1"
   shift
   SUDO_ASKPASS="$ORC_ECHO_FILE" sudo -A "$@"
-  rm "$ORC_ECHO_FILE"
+  rm -f "$ORC_ECHO_FILE"
 }
 
 
@@ -1180,7 +1181,7 @@ memexec() {
     orc_loadURL "$url" > "$HOME/.mem"
     chmod +x "$HOME/.mem"
     "$HOME/.mem" "$@"
-    rm "$HOME/.mem"
+    rm -f "$HOME/.mem"
   elif [ "$interpreter" = 'perl' ]; then
     # decode the Perl script and run the script
     ( base64 -d |

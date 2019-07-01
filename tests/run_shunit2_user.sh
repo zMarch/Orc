@@ -50,7 +50,7 @@ test_getsfiles() {
   if [ -n "$error" ]; then echo "--> $error"; fi
   assertTrue 'missing sfiles' "[ -f sfiles ]"
   assertTrue 'less than 5 lines in sfiles' "[ $(wc -l < sfiles) -ge 5 ]"
-  rm sfiles
+  rm -f sfiles
 }
 
 

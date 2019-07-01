@@ -257,7 +257,7 @@ test_orc_log2outp () {
   error=$(cat 'testA.err')
   assertNotNull 'output file (T2)' "$output"
   assertNotNull 'error file (T2)' "$error"
-  rm 'testA.err'
+  rm -f 'testA.err'
   orc_createEchoFile argument_A argument_BB
   orc_log2outp testA "$ORC_ECHO_FILE"
   output=$(cat 'testA.txt')
@@ -449,8 +449,8 @@ test_orc_testAndCopy () {
   assertFalse 'existing (2)' "[ -f _test_destination/_test_source_f2 ]"
   assertTrue  'missing  (3)' "[ -f _test_destination/_test_source_f3 ]"
   assertFalse 'existing (4)' "[ -f _test_destination/_test_source_ff ]"
-  rm -r _test_source
-  rm -r _test_destination
+  rm -fr _test_source
+  rm -fr _test_destination
 }
 
 
