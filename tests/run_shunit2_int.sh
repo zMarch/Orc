@@ -13,12 +13,12 @@
 # The shunit2 framework must be loaded in the ./shunit2 directory.
 if [ ! -f ./shunit2/shunit2 ]; then
   echo 'Error: missing the shunit2 script' >&2
-  return 1
+  exit 1
 fi
 # The o.rc must be located in the cwd directory.
 if [ ! -f ./o.rc ]; then
   echo 'missing the o.rc script in the cwd' >&2
-  return 1
+  exit 1
 fi
 
 
@@ -257,7 +257,7 @@ test_orc_log2outp () {
   error=$(cat 'testA.err')
   assertNotNull 'output file (T2)' "$output"
   assertNotNull 'error file (T2)' "$error"
-  rm 'testA.err'
+  rm -f 'testA.err'
   orc_createEchoFile argument_A argument_BB
   orc_log2outp testA "$ORC_ECHO_FILE"
   output=$(cat 'testA.txt')
@@ -449,8 +449,8 @@ test_orc_testAndCopy () {
   assertFalse 'existing (2)' "[ -f _test_destination/_test_source_f2 ]"
   assertTrue  'missing  (3)' "[ -f _test_destination/_test_source_f3 ]"
   assertFalse 'existing (4)' "[ -f _test_destination/_test_source_ff ]"
-  rm -r _test_source
-  rm -r _test_destination
+  rm -fr _test_source
+  rm -fr _test_destination
 }
 
 
@@ -558,4 +558,3 @@ oneTimeSetUp() {
 
 # shellcheck disable=SC1091
 . ./shunit2/shunit2
-

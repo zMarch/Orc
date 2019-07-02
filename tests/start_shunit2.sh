@@ -10,7 +10,7 @@
 
 if [ $# -ne 1 ]; then
   echo 'ERROR: script needs shell (bash, dash, ksh, ash) as argument' >&2
-  return 1;
+  exit 1
 fi
 
 # Download the shunit2 test framework
@@ -23,7 +23,7 @@ fi
 
 if ! [ -d 'shunit2' ]; then
   echo 'Can not download shunit2 testframework' >&2
-  return 1;
+  exit 1
 fi
 
 # Activate colored output
@@ -39,7 +39,7 @@ for runner in $(readlink -e ./tests/run_shunit2_*.sh); do
     ksh)   ksh  -i "$runner" ;;
     ash)   busybox ash "$runner" ;;
     *)     echo 'ERROR: invalid argument, must be a shell name' >&2
-           return 1 ;;
+           exit 1 ;;
   esac
 done
 
