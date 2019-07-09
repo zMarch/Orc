@@ -1083,17 +1083,34 @@ getsctp() {
 srm() {
   # secure shredding of files
   # Argument: file(s) to overwrite and to remove.
+  # Overwriting data through the file system does not work on all
+  # systems. On modern file systems like ext4, XFS often the data
+  # will be not secure destroyed.
   if [ $# -lt 1 ]; then
     echo 'Error: srm needs a file name(s) as argument' >&2
     return 1
   fi
   if orc_existsProg shred; then
-    shred -zfun 2 "$@"
+    # set writeable, overwrite, zero overwrite, delete
+    # and suppress standard output
+    shred -zfun 2 "$@" > /dev/null
+  elif orc_existsProg wipe; then
+    wipe -fcs "$@"
   else
-    # TODO: implement overwrite of file content and file name
-    # "--force" is not used because the long format is not accepted
-    # by all shells, e.g. busybox shell.
-    rm -f -- "$@"
+    for file do
+      if [ -f "$file" ]; then
+        # try to set writeable
+        chmod u+w -- "$file"
+        # overwrite file content
+        dd if=/dev/urandom of="$file" bs="$(stat -c %B -- "$file")" count="$(stat -c %b -- "$file")" status=none
+        dd if=/dev/zero of="$file" bs="$(stat -c %B -- "$file")" count="$(stat -c %b -- "$file")" status=none
+        # "--force" is not used because the long format is not accepted
+        # by all shells, e.g. busybox shell.
+        rm -f -- "$file"
+      else
+        echo "Error: '$file' is no regular file" >&2
+      fi
+    done
   fi
 }
 
