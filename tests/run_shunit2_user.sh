@@ -291,11 +291,21 @@ test_sourceurl() {
 test_srm() {
   # Test the srm function
   echo "test file for srm" > test_file_for_srm
-  error=$(srm test_file_for_srm 2>&1 > /dev/null)
-  assertEquals 'returned false' 0 $?
-  assertNull 'error message' "$error"
+  # remove one file
+  error=$(srm test_file_for_srm 2>&1)
+  assertEquals 'returned false (1)' 0 $?
+  assertNull 'error message (1)' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+  echo "test file 1 for srm" > test_file1_for_srm
+  echo "test file 2 for srm" > test_file2_for_srm
+  # remove two files
+  error=$(srm test_file1_for_srm test_file2_for_srm 2>&1)
+  assertEquals 'returned falsei (2)' 0 $?
+  assertNull 'error message (2)' "$error"
   if [ -n "$error" ]; then echo "--> $error"; fi
   assertFalse 'test file not removed' "[ -e test_file_for_srm ]"
+  assertFalse 'test file 1 not removed' "[ -e test_file1_for_srm ]"
+  assertFalse 'test file 2 not removed' "[ -e test_file2_for_srm ]"
 }
 
 
