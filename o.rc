@@ -1356,12 +1356,16 @@ printf 'HTTP says: '
 echo ''
 printf 'DNS says: '
 	if orc_existsProg dig; then
-	dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
+	dig +time=3 +tries=1 TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
 	echo '(used dig)'
 	else
-	host -t txt o-o.myaddr.l.google.com ns1.google.com | grep $orc_colorNever descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
+	host -W 3 -t txt o-o.myaddr.l.google.com ns1.google.com | grep $orc_colorNever descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
 	echo '(used host)'
 	fi
+}
+
+getgtfobins() {
+type $(orc_loadURL 'https://gtfobins.github.io/' | grep --color=never "gtfobins/" | grep "td\>" | awk -F "/" '{print $3}' | tr '\n' ' ')
 }
 
 prochide() {
@@ -1611,6 +1615,7 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]        stomp - alias for touch -r (needs arguments)
 [*]        tools - check for common tools
 [*]        wiper - remove entries from wtmp - wiper [string to grep out]
+[*]	   getgtfobins - pull a list of the current gtfobins and find which are on the system
 "
 }
 

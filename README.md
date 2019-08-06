@@ -71,6 +71,8 @@ HOWEVER. An overview:
 
 - getuservices gets all processes running by users who don't have a shell. Useful. ([Wiki](https://github.com/zMarch/Orc/wiki/getuservices))
 
+- getgtfobins pulls down the list of current gtfobins and checks to see which are installed in your $PATH
+
 - memexec uses some janky perl (see https://magisterquis.github.io/2018/03/31/in-memory-only-elf-execution.html who I stole much of the basis of it for) to execute a binary in-memory. No arguments or anything yet, and only x64 supported. ([Wiki](https://github.com/zMarch/Orc/wiki/memexec))
 
 - portscan should be fairly self-evident. It checks for the following open ports on one host: 21, 22, 23, 80, 443, 8080, 8443, 129, 445, 3389, 3306. ([Wiki](https://github.com/zMarch/Orc/wiki/portscan))
