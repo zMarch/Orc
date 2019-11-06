@@ -39,6 +39,8 @@ HOWEVER. An overview:
 
 - getexploit pulls down the linux exploit suggester ([Wiki](https://github.com/zMarch/Orc/wiki/getexploit))
 
+- getgtfobins pulls down the list of current gtfobins and checks to see which are installed in your $PATH ([Wiki](https://github.com/zMarch/Orc/wiki/getgtfobins))
+
 - getsctp checks if SCTP support is enabled. ([Wiki](https://github.com/zMarch/Orc/wiki/getsctp))
 
 - getidle gives you an accurate idle time for ptys, letting you see how recently other users have been active. ([Wiki](https://github.com/zMarch/Orc/wiki/getidle))
@@ -70,8 +72,6 @@ HOWEVER. An overview:
 - getusers gets all users with a shell. ([Wiki](https://github.com/zMarch/Orc/wiki/getusers))
 
 - getuservices gets all processes running by users who don't have a shell. Useful. ([Wiki](https://github.com/zMarch/Orc/wiki/getuservices))
-
-- getgtfobins pulls down the list of current gtfobins and checks to see which are installed in your $PATH
 
 - memexec uses some janky perl (see https://magisterquis.github.io/2018/03/31/in-memory-only-elf-execution.html who I stole much of the basis of it for) to execute a binary in-memory. No arguments or anything yet, and only x64 supported. ([Wiki](https://github.com/zMarch/Orc/wiki/memexec))
 
