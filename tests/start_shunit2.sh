@@ -31,7 +31,8 @@ export SHUNIT_COLOR
 SHUNIT_COLOR='always'
 
 # Run the tests
-for runner in $(readlink -e ./tests/run_shunit2_*.sh); do
+for runner in ./tests/run_shunit2_*.sh; do
+  runner="$(readlink -e "$runner")"
   echo ">>> start script '$runner'"
   case $1 in
     bash)  bash -i "$runner" ;;
