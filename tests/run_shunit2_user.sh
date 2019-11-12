@@ -35,6 +35,19 @@ test_gethelp() {
 }
 
 
+test_getgtfobins() {
+  # Test the getgtfobins function
+  output=$(getgtfobins 2> /dev/null)
+  assertEquals 'returned false' 0 $?
+  assertNotNull 'output is null' "$output"
+  assertContains 'in output' "$output" 'GTFOBins:'
+  assertTrue 'less than 5 lines' "[ $(echo "$output"|wc -l) -ge 5 ]"
+  error=$(getgtfobins 2>&1 > /dev/null)
+  assertNull 'error message' "$error"
+  if [ -n "$error" ]; then echo "--> $error"; fi
+}
+
+
 test_getsfiles() {
   # Test the getsfiles function
   error=$(getsfiles background 2>&1 > /dev/null)
